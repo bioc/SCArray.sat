@@ -13,10 +13,12 @@
 #######################################################################
 # Class definition
 
+setClassUnion(name="UnionMatrix", members=c("dgCMatrix", "DelayedMatrix"))
+
 setClass("SCArrayAssay", contains="Assay",
     slots = c(
-        counts2 = "SC_GDSMatrix",
-        data2 = "SC_GDSMatrix"
+        counts2 = "UnionMatrix",
+        data2 = "UnionMatrix"
     )
 )
 
