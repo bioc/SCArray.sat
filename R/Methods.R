@@ -11,12 +11,17 @@
 
 
 #######################################################################
-# Methods
+# Internal functions
 
 .redirect_slot <- function(nm)
 {
     switch(nm, data="data2", counts="counts2", nm)
 }
+
+
+
+#######################################################################
+# Methods for SCArrayAssay
 
 GetAssayData.SCArrayAssay <- function(object,
     slot=c("data", "scale.data", "counts"), ...)
@@ -27,6 +32,7 @@ GetAssayData.SCArrayAssay <- function(object,
     slot(object, .redirect_slot(slot))
 }
 
+
 SetAssayData.SCArrayAssay <- function(
   object,
   slot = c('data', 'scale.data', 'counts'),
@@ -34,8 +40,8 @@ SetAssayData.SCArrayAssay <- function(
   ...
 ) {
   CheckDots(...)
-  print(dim(object))
-  print(dim(new.data))
+  # print(dim(object))
+  # print(dim(new.data))
   slot <- slot[1]
   slot <- match.arg(arg = slot)
   if (!IsMatrixEmpty(x = new.data)) {
@@ -79,8 +85,8 @@ SetAssayData.SCArrayAssay <- function(
       )
     }
     new.data <- new.data[new.features, colnames(object), drop = FALSE]
-    print(dim(new.data))
-    print(dim(object))
+    # print(dim(new.data))
+    # print(dim(object))
     if (slot %in% c('counts', 'data') && !all(dim(new.data) == dim(object))) {
       stop(
         "Attempting to add a different number of cells and/or features",
@@ -97,5 +103,44 @@ SetAssayData.SCArrayAssay <- function(
   slot(object = object, name = .redirect_slot(slot)) <- new.data
   return(object)
 }
+
+
+
+.log_norm <- function(mat, scale.factor, verbose)
+{
+    stopifnot(inherits(mat, "DelayedArray"))
+    s <- scale.factor / DelayedArray::colSums(mat)
+    log1p(DelayedArray::sweep(mat, 2L, s, `*`))
+}
+
+NormalizeData.DelayedMatrix <- function(object,
+    normalization.method="LogNormalize", scale.factor=10000, margin=1,
+    verbose=TRUE, ...)
+{
+    # check
+    CheckDots(...)
+    if (!is.null(normalization.method))
+    {
+        stopifnot(is.character(normalization.method),
+            length(normalization.method)==1L)
+    }
+    stopifnot(margin==1)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    if (is.null(normalization.method)) return(object)
+    switch(normalization.method,
+        "LogNormalize" = .log_norm(object, scale.factor, verbose),
+        # "CLR", "RC"
+        stop("Unknown normalization method: ", normalization.method)
+    )
+}
+
+
+
+
+
+
+
+
 
 

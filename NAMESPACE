@@ -6,6 +6,7 @@ exportPattern("^sc*")
 exportClasses(SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
+S3method(NormalizeData, DelayedMatrix)
 
 
 # Import all packages listed as Imports or Depends
@@ -25,6 +26,7 @@ importFrom(utils, object.size, packageVersion, read.delim, str)
 importClassesFrom(SeuratObject, Assay)
 importFrom(SeuratObject, GetAssayData)
 importFrom(SeuratObject, SetAssayData)
+importFrom(Seurat, NormalizeData)
 
 # Import the classes and methods in SCArray
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
