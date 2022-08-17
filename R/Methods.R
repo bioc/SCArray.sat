@@ -33,12 +33,9 @@ GetAssayData.SCArrayAssay <- function(object,
 }
 
 
-SetAssayData.SCArrayAssay <- function(
-  object,
-  slot = c('data', 'scale.data', 'counts'),
-  new.data,
-  ...
-) {
+SetAssayData.SCArrayAssay <- function(object,
+    slot=c('data', 'scale.data', 'counts'), new.data, ...)
+{
   CheckDots(...)
   # print(dim(object))
   # print(dim(new.data))
@@ -105,12 +102,14 @@ SetAssayData.SCArrayAssay <- function(
 }
 
 
+####  Methods -- NormalizeData()  ####
 
 .log_norm <- function(mat, scale.factor, verbose)
 {
     stopifnot(inherits(mat, "DelayedArray"))
     s <- scale.factor / DelayedArray::colSums(mat)
-    log1p(DelayedArray::sweep(mat, 2L, s, `*`))
+    m <- log1p(DelayedArray::sweep(mat, 2L, s, `*`))
+    as(m, "SC_GDSMatrix")
 }
 
 NormalizeData.DelayedMatrix <- function(object,
@@ -136,7 +135,60 @@ NormalizeData.DelayedMatrix <- function(object,
 }
 
 
+####  Methods -- FindVariableFeatures()  ####
 
+.row_var_std <- function(mat, mu, sd, vmax, verbose)
+{
+    stopifnot(inherits(mat, "DelayedArray"))
+    # block read
+    v <- blockReduce(function(bk, v, mu, sd, vmax)
+    {
+        b <- pmin(vmax, (bk - mu) / sd)^2L
+        dim(b) <- dim(bk)
+        v + rowSums(b)
+    }, mat, init=0, grid=colAutoGrid(mat), mu=mu, sd=sd, vmax=vmax)
+    v[!is.finite(v)] <- 0
+    # output
+    v / (ncol(mat)-1L)
+}
+
+FindVariableFeatures.DelayedMatrix <- function(object,
+    selection.method="vst", loess.span=0.3, clip.max="auto",
+    mean.function=FastExpMean, dispersion.function=FastLogVMR,
+    num.bin=20, binning.method="equal_width", verbose=TRUE, ...)
+{
+    # check
+    CheckDots(...)
+
+    if (selection.method == "vst")
+    {
+        if (clip.max == "auto")
+            clip.max <- sqrt(ncol(object))
+        if (verbose)
+            cat("Calculating gene variances\n")
+        hvf.info <- data.frame(mean=rowMeans(object))
+        hvf.info$variance <- rowVars(object)
+        hvf.info$variance[is.na(hvf.info$variance)] <- 0
+        hvf.info$variance.expected <- 0
+        hvf.info$variance.standardized <- 0
+        not.const <- hvf.info$variance > 0
+        fit <- loess(log10(variance) ~ log10(mean),
+            hvf.info[not.const, ], span=loess.span)
+        hvf.info$variance.expected[not.const] <- 10 ^ fit$fitted
+
+        # get variance after feature standardization
+        if (verbose)
+            cat("Calculating feature variances of standardized and clipped values\n")
+        hvf.info$variance.standardized <- .row_var_std(
+            object, hvf.info$mean, sqrt(hvf.info$variance.expected),
+            clip.max, verbose)
+
+        colnames(hvf.info) <- paste0('vst.', colnames(hvf.info))
+    } else {
+        stop("selection.method!=vst, not implemented yet.")
+    }
+  return(hvf.info)
+}
 
 
 

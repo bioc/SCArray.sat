@@ -7,6 +7,7 @@ exportClasses(SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
 S3method(NormalizeData, DelayedMatrix)
+S3method(FindVariableFeatures, DelayedMatrix)
 
 
 # Import all packages listed as Imports or Depends
@@ -21,12 +22,14 @@ importFrom(SummarizedExperiment, SummarizedExperiment, colData, rowData,
     assays, assay, "assay<-")
 importFrom(SingleCellExperiment, SingleCellExperiment)
 importFrom(utils, object.size, packageVersion, read.delim, str)
+importFrom(stats, loess)
 
-# Import the classes and methods in SeuratObject
+# Import the classes and methods in SeuratObject / Seurat
 importClassesFrom(SeuratObject, Assay)
 importFrom(SeuratObject, GetAssayData)
 importFrom(SeuratObject, SetAssayData)
 importFrom(Seurat, NormalizeData)
+importFrom(Seurat, FindVariableFeatures)
 
 # Import the classes and methods in SCArray
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)

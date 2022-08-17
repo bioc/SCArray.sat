@@ -13,7 +13,8 @@
 #######################################################################
 # Class definition
 
-setClassUnion(name="UnionMatrix", members=c("dgCMatrix", "DelayedMatrix"))
+setClassUnion(name="UnionMatrix",
+    members=c("dgCMatrix", "DelayedMatrix", "SC_GDSMatrix"))
 
 setClass("SCArrayAssay", contains="Assay",
     slots = c(
