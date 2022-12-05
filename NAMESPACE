@@ -6,7 +6,9 @@ exportPattern("^sc*")
 exportClasses(SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
+S3method(CreateSeuratObject, SCArrayAssay)
 S3method(NormalizeData, DelayedMatrix)
+S3method(ScaleData, DelayedMatrix)
 S3method(FindVariableFeatures, DelayedMatrix)
 
 
@@ -28,6 +30,8 @@ importFrom(stats, loess)
 importClassesFrom(SeuratObject, Assay)
 importFrom(SeuratObject, GetAssayData)
 importFrom(SeuratObject, SetAssayData)
+importFrom(SeuratObject, CreateSeuratObject)
+importFrom(Seurat, ScaleData)
 importFrom(Seurat, NormalizeData)
 importFrom(Seurat, FindVariableFeatures)
 

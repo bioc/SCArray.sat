@@ -1,6 +1,6 @@
 #######################################################################
 #
-# Package name: SCArray
+# Package name: SCArray.sat
 #
 # Description:
 #     Large-scale single-cell RNA-seq data manipulation with GDS files
@@ -26,11 +26,12 @@
 
 
 
-scCreateAssayFromGDS <- function(fn, verbose=TRUE)
+scGetAssayFromGDS <- function(fn, verbose=TRUE)
 {
     # load gds data
     sce <- scExperiment(fn)
     m <- counts(sce)
+    # fake matrix
     m0 <- sparseMatrix(i=integer(), j=integer(), x=double(),
         dims=c(nrow(m), ncol(m)))
     rownames(m0) <- rownames(m)
