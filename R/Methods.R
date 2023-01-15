@@ -223,7 +223,7 @@ x_row_scale <- function(mat, center=TRUE, scale=TRUE)
 ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, block.size=1000,
-    min.cells.to.block=3000, verbose=TRUE, ...)
+    min.cells.to.block=3000, use_gds=FALSE, verbose=TRUE, ...)
 {
     # check
     CheckDots(...)
@@ -241,8 +241,19 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     split.cells <- split(colnames(object), split.by)
     CheckGC()
 
+    if (is.logical(use_gds))
+    {
+        if (isTRUE(use_gds))
+        {
+            use_gds <- "_scale_data.gds"
+            while (file.exists(use_gds)) use_gds <- paste0("_", use_gds)
+        }
+    } else if (!is.character(use_gds))
+        stop("'use_gds' should be FALSE, TRUE or a file name.")
+
     if (!is.null(vars.to.regress))
     {
+        stop("Not implemented yet.")
         if (is.null(latent.data))
         {
             latent.data <- data.frame(row.names=colnames(object))
@@ -302,8 +313,25 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     }
 
     # output variable
-    scaled.data <- matrix(NA_real_, nrow=nrow(object), ncol=ncol(object),
-        dimnames=object.names)
+    if (is.character(use_gds))
+    {
+        # use DelayedMatrix
+        if (file.exists(use_gds))
+        {
+            if (verbose) message("Open ", sQuote(use_gds))
+            outf <- openfn.gds(use_gds, readonly=FALSE)
+        } else {
+            if (verbose) message("Create ", sQuote(use_gds))
+            outf <- createfn.gds(use_gds)
+        }
+        on.exit(closefn.gds(outf))
+        out_nd <- add.gdsn(outf, "scale.data", storage="double",
+            valdim=dim(object), replace=TRUE)
+    } else {
+        scaled.data <- matrix(NA_real_, nrow=nrow(object), ncol=ncol(object),
+            dimnames=object.names)
+    }
+    # scale
     for (x in names(split.cells))
     {
         if (verbose)
@@ -316,14 +344,33 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         # center & scale, m is DelayedMatrix
         m <- x_row_scale(m, do.center, do.scale)
         # save
-        for (k in seq_along(ii))
+        if (!is.character(use_gds))
         {
-            v <- m[, k, drop=TRUE]
-            v[v > scale.max] <- scale.max  # set a bound
-            v[is.na(v)] <- 0
-            scaled.data[, ii[k]] <- v
+            for (k in seq_along(ii))
+            {
+                v <- m[, k, drop=TRUE]
+                v[v > scale.max] <- scale.max  # set a bound
+                v[is.na(v)] <- 0
+                scaled.data[, ii[k]] <- v
+            }
+        } else {
+            for (k in seq_along(ii))
+            {
+                v <- m[, k, drop=TRUE]
+                v[v > scale.max] <- scale.max  # set a bound
+                v[is.na(v)] <- 0
+                write.gdsn(out_nd, v, start=c(1L, ii[k]), count=c(length(v), 1L))
+            }
         }
         # CheckGC()
+    }
+    if (is.character(use_gds))
+    {
+        on.exit()
+        closefn.gds(outf)  # close the file first
+        scaled.data <- scArray(use_gds, "scale.data")
+        dimnames(scaled.data) <- object.names
+        scaled.data <- scObj(scaled.data)
     }
 
     return(scaled.data)
