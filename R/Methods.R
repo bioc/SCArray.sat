@@ -15,7 +15,8 @@
 
 .redirect_slot <- function(nm)
 {
-    stopifnot(is.character(nm))
+    stopifnot(is.character(nm), length(nm)==1L)
+    # switch(nm, data="data2", counts="counts2", scale.data="scale.data2", nm)
     switch(nm, data="data2", counts="counts2", nm)
 }
 
@@ -179,10 +180,10 @@ CreateSeuratObject.SCArrayAssay <- function(counts, project='SeuratProject',
 
 .log_norm <- function(mat, scale.factor, verbose)
 {
-    stopifnot(inherits(mat, "DelayedArray"))
+    stopifnot(is(mat, "DelayedArray"))
     s <- scale.factor / DelayedArray::colSums(mat)
     m <- log1p(DelayedArray::sweep(mat, 2L, s, `*`))
-    as(m, "SC_GDSMatrix")
+    # as(m, "SC_GDSMatrix")
 }
 
 NormalizeData.DelayedMatrix <- function(object,
@@ -198,12 +199,13 @@ NormalizeData.DelayedMatrix <- function(object,
     }
     stopifnot(margin==1)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-
     if (is.null(normalization.method)) return(object)
+
     switch(normalization.method,
         "LogNormalize" = .log_norm(object, scale.factor, verbose),
         # "CLR", "RC"
-        stop("Unknown normalization method: ", normalization.method)
+        stop("Unknown or not implemented normalization method: ",
+            normalization.method)
     )
 }
 
@@ -338,7 +340,8 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         msg <- paste0(
             toupper(x = substr(x = msg, start = 1, stop = 1)),
       substr(x = msg, start = 2, stop = nchar(x = msg)),
-      ' data matrix (DelayedMatrix)'
+      ' data matrix (', class(object)[1L],
+      ' [', paste(dim(object), collapse=','), '])'
       )
         message(msg)
     }
@@ -397,7 +400,7 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
 .row_var_std <- function(mat, mu, sd, vmax, verbose)
 {
-    stopifnot(inherits(mat, "DelayedArray"))
+    stopifnot(is(mat, "DelayedArray"))
     # block read
     v <- blockReduce(function(bk, v, mu, sd, vmax)
     {
@@ -441,6 +444,7 @@ FindVariableFeatures.DelayedMatrix <- function(object,
             object, hvf.info$mean, sqrt(hvf.info$variance.expected),
             clip.max, verbose)
 
+        rownames(hvf.info) <- rownames(object)
         colnames(hvf.info) <- paste0('vst.', colnames(hvf.info))
     } else {
         stop("selection.method!=vst, not implemented yet.")

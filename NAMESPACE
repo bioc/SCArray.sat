@@ -1,5 +1,5 @@
 # Export the following names
-# useDynLib(SCArray, c_rowVars_update, c_rowVars_final)
+# useDynLib(SCArray.sat, )
 
 # Export all names
 exportPattern("^sc*")
@@ -14,11 +14,11 @@ S3method(FindVariableFeatures, DelayedMatrix)
 
 # Import all packages listed as Imports or Depends
 import(methods)
+import(gdsfmt)
 import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
 import(DelayedArray)
-import(gdsfmt)
 import(DelayedMatrixStats)
 importFrom(SummarizedExperiment, SummarizedExperiment, colData, rowData,
     assays, assay, "assay<-")
