@@ -204,11 +204,28 @@ NormalizeData.DelayedMatrix <- function(object,
 
 ####  Methods -- ScaleData()  ####
 
+x_row_scale <- function(mat, center=TRUE, scale=TRUE)
+{
+    if (center) r_m <- rowMeans(mat)
+    if (scale)
+    {
+        if (center)
+            rsd <- rowSds(mat, center=r_m)
+        else
+            rsd <- rowSds(mat, center=rep(0, nrow(mat)))
+    }
+    if (center) mat <- mat - r_m
+    if (scale) mat <- mat/rsd
+    return(mat)
+}
+
+
 ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, block.size=1000,
     min.cells.to.block=3000, verbose=TRUE, ...)
 {
+    # check
     CheckDots(...)
     features <- features %||% rownames(object)
     features <- intersect(features, rownames(object))
@@ -226,7 +243,7 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
     if (!is.null(vars.to.regress))
     {
-        if (is.null(x = latent.data))
+        if (is.null(latent.data))
         {
             latent.data <- data.frame(row.names = colnames(x = object))
         } else {
@@ -320,70 +337,44 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     dimnames(x = object) <- object.names
     CheckGC()
   }
+
     if (verbose && (do.scale || do.center))
     {
-        msg <- paste(
-      na.omit(object = c(
-        ifelse(test = do.center, yes = 'centering', no = NA_character_),
-        ifelse(test = do.scale, yes = 'scaling', no = NA_character_)
-      )),
-      collapse = ' and '
-        )
+        msg <- paste(na.omit(c(
+            ifelse(do.center, 'centering', NA_character_),
+            ifelse(do.scale, 'scaling', NA_character_))), collapse = ' and ')
         msg <- paste0(
-            toupper(x = substr(x = msg, start = 1, stop = 1)),
-      substr(x = msg, start = 2, stop = nchar(x = msg)),
-      ' data matrix (', class(object)[1L],
-      ' [', paste(dim(object), collapse=','), '])'
-      )
+            toupper(substr(msg, 1L, 1L)), substring(msg, 2L),
+            ' data matrix (', class(object)[1L],
+            ' [', paste(dim(object), collapse=','), '])')
         message(msg)
     }
 
-    scale_fc_sp <- is_sparse(object)
-    if (scale_fc_sp)
-    {
-        scale.function <- Seurat:::FastSparseRowScale
-    } else {
-        scale.function <- Seurat:::FastRowScale
-    }
-
+    # output variable
     scaled.data <- matrix(NA_real_, nrow=nrow(object), ncol=ncol(object),
         dimnames=object.names)
-    max.block <- ceiling(length(features) / block.size)
     for (x in names(split.cells))
     {
         if (verbose)
         {
             if (length(split.cells)>1 && (do.scale || do.center))
                 message(gsub('matrix', 'from split ', msg), x)
-            pb <- txtProgressBar(0, max.block, style=3L, file=stderr())
         }
-        for (i in 1:max.block)
+        ii <- match(split.cells[[x]], colnames(object))
+        m <- object[, ii, drop=FALSE]
+        # center & scale, m is DelayedMatrix
+        m <- x_row_scale(m, do.center, do.scale)
+        # save
+        for (k in seq_along(ii))
         {
-            my.inds <- ((block.size*(i-1L)):(block.size*i - 1L)) + 1L
-            my.inds <- my.inds[my.inds <= length(features)]
-            m <- object[features[my.inds], split.cells[[x]], drop=FALSE]
-            arg.list <- list(
-                mat = if (scale_fc_sp) as(m, "sparseMatrix") else as.matrix(m),
-                scale = do.scale,
-                center = do.center,
-                scale_max = scale.max,
-                display_progress = FALSE
-            )
-            arg.list <- arg.list[intersect(names(arg.list), names(formals(scale.function)))]
-            # call
-            data.scale <- do.call(scale.function, arg.list)
-            dimnames(data.scale) <- dimnames(object[features[my.inds], split.cells[[x]]])
-            scaled.data[features[my.inds], split.cells[[x]]] <- data.scale
-            rm(data.scale, m, arg.list)
-            CheckGC()
-            if (verbose) setTxtProgressBar(pb, i)
+            v <- m[, k, drop=TRUE]
+            v[v > scale.max] <- scale.max
+            v[is.na(v)] <- 0
+            scaled.data[, ii[k]] <- v
         }
-        if (verbose) close(pb)
+        # CheckGC()
     }
 
-    dimnames(scaled.data) <- object.names
-    scaled.data[is.na(scaled.data)] <- 0
-    CheckGC()
     return(scaled.data)
 }
 
@@ -392,7 +383,7 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
 .row_var_std <- function(mat, mu, sd, vmax, verbose)
 {
-    stopifnot(is(mat, "DelayedArray"))
+    stopifnot(is(mat, "DelayedMatrix"))
     # block read
     v <- blockReduce(function(bk, v, mu, sd, vmax)
     {
@@ -445,7 +436,6 @@ FindVariableFeatures.DelayedMatrix <- function(object,
 }
 
 
-
-
+# as.Seurat
 
 
