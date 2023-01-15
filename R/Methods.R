@@ -231,7 +231,7 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     features <- intersect(features, rownames(object))
     object <- object[features, , drop=FALSE]
     object.names <- dimnames(object)
-    min.cells.to.block <- min(min.cells.to.block, ncol(object))
+    # min.cells.to.block <- min(min.cells.to.block, ncol(object))
     # suppressWarnings(expr = Parenting(
     #     parent.find = "ScaleData.Assay",
     #     features = features,
@@ -245,98 +245,49 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     {
         if (is.null(latent.data))
         {
-            latent.data <- data.frame(row.names = colnames(x = object))
+            latent.data <- data.frame(row.names=colnames(object))
         } else {
-            latent.data <- latent.data[colnames(x = object), , drop = FALSE]
-            rownames(x = latent.data) <- colnames(x = object)
+            latent.data <- latent.data[colnames(object), , drop = FALSE]
+            rownames(latent.data) <- colnames(object)
         }
-        if (any(vars.to.regress %in% rownames(x = object)))
+        if (any(vars.to.regress %in% rownames(object)))
         {
-            latent.data <- cbind(latent.data,
-                t(x = object[vars.to.regress[vars.to.regress %in% rownames(x = object)], , drop=FALSE])
+            x <- object[intersect(vars.to.regress, rownames(object)), , drop=FALSE]
+            latent.data <- cbind(latent.data, realize(t(x), BACKEND=NULL))
+            remove(x)
+        }
+        notfound <- setdiff(vars.to.regress, colnames(latent.data))
+        if (length(notfound) == length(vars.to.regress))
+        {
+            stop("None of the requested variables to regress are present in the object.",
+                call.=FALSE)
+        } else if (length(notfound) > 0L)
+        {
+            warning("Requested variables to regress not in object: ",
+                paste(notfound, collapse = ", "),
+                call.=FALSE, immediate.=TRUE)
+            vars.to.regress <- colnames(latent.data)
+        }
+        if (verbose)
+            message("Regressing out ", paste(vars.to.regress, collapse=', '))
+
+        object <- lapply(names(split.cells), FUN=function(x)
+        {
+            if (verbose && length(split.cells) > 1L)
+                message("Regressing out variables from split ", x)
+            RegressOutMatrix(
+                data.expr = object[, split.cells[[x]], drop = FALSE],
+                latent.data = latent.data[split.cells[[x]], , drop = FALSE],
+                features.regress = features,
+                model.use = model.use,
+                use.umi = use.umi,
+                verbose = verbose
             )
-        }
-    # Currently, RegressOutMatrix will do nothing if latent.data = NULL
-    notfound <- setdiff(x = vars.to.regress, y = colnames(x = latent.data))
-    if (length(x = notfound) == length(x = vars.to.regress)) {
-      stop(
-        "None of the requested variables to regress are present in the object.",
-        call. = FALSE
-      )
-    } else if (length(x = notfound) > 0) {
-      warning(
-        "Requested variables to regress not in object: ",
-        paste(notfound, collapse = ", "),
-        call. = FALSE,
-        immediate. = TRUE
-      )
-      vars.to.regress <- colnames(x = latent.data)
+        })
+        object <- do.call(cbind, object)
+        dimnames(object) <- object.names
+        CheckGC()
     }
-    if (verbose) {
-      message("Regressing out ", paste(vars.to.regress, collapse = ', '))
-    }
-    chunk.points <- ChunkPoints(dsize = nrow(x = object), csize = block.size)
-    if (nbrOfWorkers() > 1) { # TODO: lapply
-      chunks <- expand.grid(
-        names(x = split.cells),
-        1:ncol(x = chunk.points),
-        stringsAsFactors = FALSE
-      )
-      object <- future_lapply(
-        X = 1:nrow(x = chunks),
-        FUN = function(i) {
-          row <- chunks[i, ]
-          group <- row[[1]]
-          index <- as.numeric(x = row[[2]])
-          return(RegressOutMatrix(
-            data.expr = object[chunk.points[1, index]:chunk.points[2, index], split.cells[[group]], drop = FALSE],
-            latent.data = latent.data[split.cells[[group]], , drop = FALSE],
-            features.regress = features,
-            model.use = model.use,
-            use.umi = use.umi,
-            verbose = FALSE
-          ))
-        }
-      )
-      if (length(x = split.cells) > 1) {
-        merge.indices <- lapply(
-          X = 1:length(x = split.cells),
-          FUN = seq.int,
-          to = length(x = object),
-          by = length(x = split.cells)
-        )
-        object <- lapply(
-          X = merge.indices,
-          FUN = function(x) {
-            return(do.call(what = 'rbind', args = object[x]))
-          }
-        )
-        object <- do.call(what = 'cbind', args = object)
-      } else {
-        object <- do.call(what = 'rbind', args = object)
-      }
-    } else {
-      object <- lapply(
-        X = names(x = split.cells),
-        FUN = function(x) {
-          if (verbose && length(x = split.cells) > 1) {
-            message("Regressing out variables from split ", x)
-          }
-          return(RegressOutMatrix(
-            data.expr = object[, split.cells[[x]], drop = FALSE],
-            latent.data = latent.data[split.cells[[x]], , drop = FALSE],
-            features.regress = features,
-            model.use = model.use,
-            use.umi = use.umi,
-            verbose = verbose
-          ))
-        }
-      )
-      object <- do.call(what = 'cbind', args = object)
-    }
-    dimnames(x = object) <- object.names
-    CheckGC()
-  }
 
     if (verbose && (do.scale || do.center))
     {
@@ -368,7 +319,7 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         for (k in seq_along(ii))
         {
             v <- m[, k, drop=TRUE]
-            v[v > scale.max] <- scale.max
+            v[v > scale.max] <- scale.max  # set a bound
             v[is.na(v)] <- 0
             scaled.data[, ii[k]] <- v
         }
