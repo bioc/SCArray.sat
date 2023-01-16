@@ -434,6 +434,149 @@ FindVariableFeatures.DelayedMatrix <- function(object,
 }
 
 
+####  Methods -- RunPCA()  ####
+
+RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
+    rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
+    nfeatures.print=30, reduction.key="PC_", seed.use=42, ...)
+{
+    # check
+    if (length(VariableFeatures(object))==0L && is.null(features))
+    {
+        stop("Variable features haven't been set. Run FindVariableFeatures() or provide a vector of feature names.")
+    }
+    data.use <- GetAssayData(object, "scale.data")
+    if (NROW(data.use) == 0L)
+        stop("Data has not been scaled. Please run ScaleData and retry.")
+
+    features <- features %||% VariableFeatures(object)
+    features.keep <- unique(features[features %in% rownames(data.use)])
+    if (length(features.keep) < length(features))
+    {
+        features.exclude <- setdiff(features, features.keep)
+        if (verbose)
+        {
+            warning(paste0("The following ", length(features.exclude),
+                " features requested have not been scaled (running reduction without them): ",
+                paste0(features.exclude, collapse = ", ")), immediate.=TRUE)
+        }
+    }
+    features <- features.keep
+    features.var <- rowVars(data.use[features, ])
+    features.keep <- features[features.var > 0]
+    if (length(features.keep) < length(features))
+    {
+        features.exclude <- setdiff(features, features.keep)
+        if (verbose)
+        {
+            warning(paste0("The following ", length(features.exclude),
+                " features requested have zero variance (running reduction without them): ",
+                paste0(features.exclude, collapse = ", ")), immediate.=TRUE)
+        }
+    }
+    features <- features.keep
+    features <- features[!is.na(x = features)]
+    data.use <- data.use[features, ]
+
+    # run
+    RunPCA(object=data.use,
+        assay = assay,
+        npcs = npcs,
+        rev.pca = rev.pca,
+        weight.by.var = weight.by.var,
+        verbose = verbose,
+        ndims.print = ndims.print,
+        nfeatures.print = nfeatures.print,
+        reduction.key = reduction.key,
+        seed.use = seed.use,
+        ...
+    )
+}
+
+
+
+RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
+    weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5, nfeatures.print=30,
+    reduction.key="PC_", seed.use=42, approx=TRUE, ...)
+{
+    # x_check(x, "Calling RunPCA.SC_GDSMatrix() with %s ...")
+    cat("Calling RunPCA.SC_GDSMatrix()\n")
+
+    if (!is.null(seed.use)) set.seed(seed.use)
+    if (rev.pca)
+    {
+        npcs <- min(npcs, ncol(x = object) - 1)
+        pca_rv <- irlba(A = object, nv = npcs, ...)
+        total.variance <- sum(RowVar(x = t(x = object)))
+        sdev <- pca_rv$d/sqrt(max(1, nrow(x = object) - 1))
+        if (weight.by.var) {
+            feature.loadings <- pca_rv$u %*% diag(pca_rv$d)
+        } else{
+            feature.loadings <- pca_rv$u
+        }
+        cell.embeddings <- pca_rv$v
+
+    } else {
+        total.variance <- sum(rowVars(object))
+        if (approx)
+        {
+            npcs <- min(npcs, nrow(object)-1L)
+            # pca_rv <- irlba(A = t(x = object), nv = npcs, ...)
+            pca_rv <- BiocSingular::runIrlbaSVD(t(object),
+                k=npcs, center=FALSE, scale=FALSE, deferred=FALSE, fold=1)
+            feature.loadings <- pca_rv$v
+            sdev <- pca_rv$d / sqrt(max(1L, ncol(object)-1L))
+            if (weight.by.var)
+            {
+                cell.embeddings <- pca_rv$u %*% diag(pca_rv$d)
+            } else {
+                cell.embeddings <- pca_rv$u
+            }
+        } else {
+            npcs <- min(npcs, nrow(object))
+            pca_rv <- prcomp(x = t(object), rank. = npcs, ...)
+            feature.loadings <- pca_rv$rotation
+            sdev <- pca_rv$sdev
+            if (weight.by.var)
+            {
+                cell.embeddings <- pca_rv$x
+            } else {
+                cell.embeddings <- pca_rv$x / (pca_rv$sdev[1:npcs] * sqrt(x = ncol(x = object) - 1))
+            }
+        }
+    }
+
+    rownames(feature.loadings) <- rownames(object)
+    colnames(feature.loadings) <- paste0(reduction.key, 1:npcs)
+    rownames(cell.embeddings) <- colnames(object)
+    colnames(cell.embeddings) <- colnames(feature.loadings)
+    reduction.data <- CreateDimReducObject(
+        embeddings = cell.embeddings,
+        loadings = feature.loadings,
+        assay = assay,
+        stdev = sdev,
+        key = reduction.key,
+        misc = list(total.variance=total.variance)
+    )
+    if (verbose)
+    {
+        msg <- capture.output(print(
+            x = reduction.data,
+            dims = ndims.print,
+            nfeatures = nfeatures.print
+        ))
+        message(paste(msg, collapse='\n'))
+    }
+    return(reduction.data)
+}
+
+
+
+
+
+
+
+
 # as.Seurat
 
 

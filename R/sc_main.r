@@ -24,6 +24,8 @@
 
 .pretty <- function(x) prettyNum(x, big.mark=",", scientific=FALSE)
 
+x_check <- function(x, msg) SCArray:::x_check(x, msg)
+
 
 
 scGetAssayFromGDS <- function(fn, verbose=TRUE)

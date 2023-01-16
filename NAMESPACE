@@ -10,6 +10,8 @@ S3method(CreateSeuratObject, SCArrayAssay)
 S3method(NormalizeData, DelayedMatrix)
 S3method(ScaleData, DelayedMatrix)
 S3method(FindVariableFeatures, DelayedMatrix)
+S3method(RunPCA, SCArrayAssay)
+S3method(RunPCA, SC_GDSMatrix)
 
 
 # Import all packages listed as Imports or Depends
@@ -19,7 +21,7 @@ import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
 import(DelayedArray)
-import(DelayedMatrixStats)
+# import(DelayedMatrixStats)
 importFrom(SummarizedExperiment, SummarizedExperiment, colData, rowData,
     assays, assay, "assay<-")
 importFrom(SingleCellExperiment, SingleCellExperiment)
@@ -31,9 +33,8 @@ importClassesFrom(SeuratObject, Assay)
 importFrom(SeuratObject, GetAssayData)
 importFrom(SeuratObject, SetAssayData)
 importFrom(SeuratObject, CreateSeuratObject)
-importFrom(Seurat, ScaleData)
-importFrom(Seurat, NormalizeData)
-importFrom(Seurat, FindVariableFeatures)
+importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures)
+importFrom(Seurat, RunPCA)
 
 # Import the classes and methods in SCArray
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
