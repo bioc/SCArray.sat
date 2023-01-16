@@ -264,7 +264,7 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         if (any(vars.to.regress %in% rownames(object)))
         {
             x <- object[intersect(vars.to.regress, rownames(object)), , drop=FALSE]
-            latent.data <- cbind(latent.data, realize(t(x), BACKEND=NULL))
+            latent.data <- cbind(latent.data, as.matrix(t(x)))
             remove(x)
         }
         notfound <- setdiff(vars.to.regress, colnames(latent.data))
@@ -316,12 +316,11 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     if (is.character(use_gds))
     {
         # use DelayedMatrix
+        if (verbose) message("Writing to ", sQuote(use_gds))
         if (file.exists(use_gds))
         {
-            if (verbose) message("Open ", sQuote(use_gds))
             outf <- openfn.gds(use_gds, readonly=FALSE)
         } else {
-            if (verbose) message("Create ", sQuote(use_gds))
             outf <- createfn.gds(use_gds)
         }
         on.exit(closefn.gds(outf))
@@ -344,6 +343,8 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         # center & scale, m is DelayedMatrix
         m <- x_row_scale(m, do.center, do.scale)
         # save
+        if (verbose)
+            pb <- txtProgressBar(min=0, max=length(ii), style=3, file=stderr())
         if (!is.character(use_gds))
         {
             for (k in seq_along(ii))
@@ -352,6 +353,8 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 v[v > scale.max] <- scale.max  # set a bound
                 v[is.na(v)] <- 0
                 scaled.data[, ii[k]] <- v
+                if (verbose && (k %% 1000L==1L))
+                    setTxtProgressBar(pb, k)
             }
         } else {
             for (k in seq_along(ii))
@@ -360,7 +363,14 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 v[v > scale.max] <- scale.max  # set a bound
                 v[is.na(v)] <- 0
                 write.gdsn(out_nd, v, start=c(1L, ii[k]), count=c(length(v), 1L))
+                if (verbose && (k %% 1000L==1L))
+                    setTxtProgressBar(pb, k)
             }
+        }
+        if (verbose)
+        {
+            setTxtProgressBar(pb, length(ii))
+            close(pb)
         }
         # CheckGC()
     }

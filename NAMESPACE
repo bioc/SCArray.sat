@@ -24,7 +24,7 @@ import(DelayedArray)
 importFrom(SummarizedExperiment, SummarizedExperiment, colData, rowData,
     assays, assay, "assay<-")
 importFrom(SingleCellExperiment, SingleCellExperiment)
-importFrom(utils, object.size, packageVersion, read.delim, str)
+importFrom(utils, object.size, packageVersion, read.delim, str, txtProgressBar)
 importFrom(stats, loess)
 
 # Import the classes and methods in SeuratObject / Seurat
