@@ -21,7 +21,6 @@ import(BiocGenerics)
 import(S4Vectors)
 import(IRanges)
 import(DelayedArray)
-# import(DelayedMatrixStats)
 importFrom(SummarizedExperiment, SummarizedExperiment, colData, rowData,
     assays, assay, "assay<-")
 importFrom(SingleCellExperiment, SingleCellExperiment)

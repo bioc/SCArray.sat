@@ -499,8 +499,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5, nfeatures.print=30,
     reduction.key="PC_", seed.use=42, approx=TRUE, ...)
 {
-    # x_check(x, "Calling RunPCA.SC_GDSMatrix() with %s ...")
-    cat("Calling RunPCA.SC_GDSMatrix()\n")
+    x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
 
     if (!is.null(seed.use)) set.seed(seed.use)
     if (rev.pca)
