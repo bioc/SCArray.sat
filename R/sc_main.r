@@ -34,17 +34,14 @@ scGetAssayFromGDS <- function(fn, verbose=TRUE)
     sce <- scExperiment(fn)
     m <- counts(sce)
     # fake matrix
-    m0 <- sparseMatrix(i=integer(), j=integer(), x=double(),
-        dims=c(nrow(m), ncol(m)))
-    rownames(m0) <- rownames(m)
-    colnames(m0) <- colnames(m)
+    # m0 <- sparseMatrix(i=integer(), j=integer(), x=double(),
+    #     dims=c(nrow(m), ncol(m)))
+    # rownames(m0) <- rownames(m)
+    # colnames(m0) <- colnames(m)
     init.meta.features <- data.frame(row.names=rownames(m))
     # output
     rv <- new(Class = "SCArrayAssay",
-        counts = m0, data = m0,
-        counts2 = m, data2 = m,
-        scale.data = new(Class="matrix"),
-        scale.data2 = NULL,
+        counts2 = m, data2 = m, scale.data2 = NULL,
         meta.features = init.meta.features,
         misc = list())
     return(rv)
