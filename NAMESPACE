@@ -16,13 +16,8 @@ S3method(RunPCA, SC_GDSMatrix)
 
 # Import all packages listed as Imports or Depends
 import(methods)
-# import(Matrix)
-import(BiocGenerics)
 import(S4Vectors)
-import(IRanges)
-
 importFrom(DelayedArray, blockReduce, colAutoGrid, sweep)
-
 importFrom(gdsfmt, createfn.gds, openfn.gds, closefn.gds, add.gdsn, write.gdsn)
 importFrom(utils, capture.output, packageVersion, txtProgressBar,
     setTxtProgressBar)
@@ -39,7 +34,7 @@ importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
 # Import the classes and methods in SCArray
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
 importFrom(SCArray, scArray, scExperiment, scObj,
-    colSums, rowVars, rowSds)
+    colSums, colVars, rowMeans, rowVars, rowSds)
 
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 
