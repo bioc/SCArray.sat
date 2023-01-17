@@ -170,7 +170,7 @@ CreateSeuratObject.SCArrayAssay <- function(counts, project='SeuratProject',
 
 ####  Methods -- NormalizeData()  ####
 
-.log_norm <- function(mat, scale.factor, verbose)
+.log_norm <- function(mat, scale.factor=10000, verbose=TRUE)
 {
     stopifnot(is(mat, "DelayedArray"))
     s <- scale.factor / colSums(mat)
@@ -218,6 +218,26 @@ x_row_scale <- function(mat, center=TRUE, scale=TRUE)
     return(mat)
 }
 
+x_write_gdsn <- function(mat, gdsn, st=1L, scale.max=10, verbose=TRUE)
+{
+    stopifnot(is(mat, "DelayedMatrix"))
+    stopifnot(is(gdsn, "gdsn.class"))
+    if (verbose)
+        pb <- txtProgressBar(min=st, max=st+ncol(mat), style=3L, file=stderr())
+    # block write
+    blockReduce(function(bk, i, gdsn, vmax)
+    {
+        bk[bk > vmax] <- vmax  # set a bound
+        bk[is.na(bk)] <- 0
+        write.gdsn(gdsn, bk, start=c(1L, i), count=c(-1L, ncol(bk)))
+        i <- i + ncol(bk)
+        if (verbose) setTxtProgressBar(pb, i)
+        i
+    }, mat, init=st, grid=colAutoGrid(mat), gdsn=gdsn, vmax=scale.max)
+    # finally
+    if (verbose) close(pb)
+    invisible()
+}
 
 ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
@@ -245,7 +265,12 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         if (isTRUE(use_gds))
         {
             use_gds <- "_scale_data.gds"
-            while (file.exists(use_gds)) use_gds <- paste0("_", use_gds)
+            i <- 1L
+            while (file.exists(use_gds))
+            {
+                i <- i + 1L
+                use_gds <- sprintf("_scale_data%d.gds", i)
+            }
         }
     } else if (!is.character(use_gds))
         stop("'use_gds' should be FALSE, TRUE or a file name.")
@@ -325,6 +350,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         on.exit(closefn.gds(outf))
         out_nd <- add.gdsn(outf, "scale.data", storage="double",
             valdim=dim(object), replace=TRUE)
+        gds_colnm <- NULL
     } else {
         scaled.data <- matrix(NA_real_, nrow=nrow(object), ncol=ncol(object),
             dimnames=object.names)
@@ -342,10 +368,13 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         # center & scale, m is DelayedMatrix
         m <- x_row_scale(m, do.center, do.scale)
         # save
-        if (verbose)
-            pb <- txtProgressBar(min=0, max=length(ii), style=3, file=stderr())
-        if (!is.character(use_gds))
+        if (is.character(use_gds))
         {
+            x_write_gdsn(m, out_nd, length(gds_colnm)+1L, scale.max, verbose)
+            gds_colnm <- c(gds_colnm, split.cells[[x]])
+        } else {
+            if (verbose)
+                pb <- txtProgressBar(min=0, max=length(ii), style=3, file=stderr())
             for (k in seq_along(ii))
             {
                 v <- m[, k, drop=TRUE]
@@ -355,29 +384,24 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 if (verbose && (k %% 1000L==1L))
                     setTxtProgressBar(pb, k)
             }
-        } else {
-            for (k in seq_along(ii))
+            if (verbose)
             {
-                v <- m[, k, drop=TRUE]
-                v[v > scale.max] <- scale.max  # set a bound
-                v[is.na(v)] <- 0
-                write.gdsn(out_nd, v, start=c(1L, ii[k]), count=c(length(v), 1L))
-                if (verbose && (k %% 1000L==1L))
-                    setTxtProgressBar(pb, k)
+                setTxtProgressBar(pb, length(ii))
+                close(pb)
             }
+            CheckGC()
         }
-        if (verbose)
-        {
-            setTxtProgressBar(pb, length(ii))
-            close(pb)
-        }
-        # CheckGC()
     }
     if (is.character(use_gds))
     {
         on.exit()
         closefn.gds(outf)  # close the file first
         scaled.data <- scArray(use_gds, "scale.data")
+        if (any(gds_colnm != colnames(object)))
+        {
+            i <- match(colnames(object), gds_colnm)
+            scaled.data <- scaled.data[, i]
+        }
         dimnames(scaled.data) <- object.names
         scaled.data <- scObj(scaled.data)
     }
