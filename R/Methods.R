@@ -173,12 +173,11 @@ CreateSeuratObject.SCArrayAssay <- function(counts, project='SeuratProject',
 .log_norm <- function(mat, scale.factor, verbose)
 {
     stopifnot(is(mat, "DelayedArray"))
-    s <- scale.factor / DelayedArray::colSums(mat)
-    m <- log1p(DelayedArray::sweep(mat, 2L, s, `*`))
-    # as(m, "SC_GDSMatrix")
+    s <- scale.factor / colSums(mat)
+    m <- log1p(sweep(mat, 2L, s, `*`))
 }
 
-NormalizeData.DelayedMatrix <- function(object,
+NormalizeData.SC_GDSMatrix <- function(object,
     normalization.method="LogNormalize", scale.factor=10000, margin=1,
     verbose=TRUE, ...)
 {
@@ -220,7 +219,7 @@ x_row_scale <- function(mat, center=TRUE, scale=TRUE)
 }
 
 
-ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
+ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, block.size=1000,
     min.cells.to.block=3000, use_gds=FALSE, verbose=TRUE, ...)
@@ -391,7 +390,7 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
 .row_var_std <- function(mat, mu, sd, vmax, verbose)
 {
-    stopifnot(is(mat, "DelayedMatrix"))
+    stopifnot(is(mat, "SC_GDSMatrix"))
     # block read
     v <- blockReduce(function(bk, v, mu, sd, vmax)
     {
@@ -404,13 +403,18 @@ ScaleData.DelayedMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     v / (ncol(mat)-1L)
 }
 
-FindVariableFeatures.DelayedMatrix <- function(object,
+FindVariableFeatures.SC_GDSMatrix <- function(object,
     selection.method="vst", loess.span=0.3, clip.max="auto",
-    mean.function=FastExpMean, dispersion.function=FastLogVMR,
-    num.bin=20, binning.method="equal_width", verbose=TRUE, ...)
+    mean.function=NULL, dispersion.function=NULL, num.bin=20,
+    binning.method="equal_width", verbose=TRUE, ...)
 {
     # check
     CheckDots(...)
+
+    if (is.null(mean.function))
+        mean.function <- Seurat:::FastExpMean
+    if (is.null(dispersion.function))
+        dispersion.function <- Seurat:::FastLogVMR
 
     if (selection.method == "vst")
     {
@@ -459,6 +463,7 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
     if (NROW(data.use) == 0L)
         stop("Data has not been scaled. Please run ScaleData and retry.")
 
+    # filter (need var > 0)
     features <- features %||% VariableFeatures(object)
     features.keep <- unique(features[features %in% rownames(data.use)])
     if (length(features.keep) < length(features))
@@ -503,8 +508,6 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
     )
 }
 
-
-
 RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5, nfeatures.print=30,
     reduction.key="PC_", seed.use=42, approx=TRUE, ...)
@@ -512,46 +515,33 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
 
     if (!is.null(seed.use)) set.seed(seed.use)
+    pca_func <- if (isTRUE(approx)) runIrlbaSVD else runExactSVD
     if (rev.pca)
     {
-        npcs <- min(npcs, ncol(x = object) - 1)
-        pca_rv <- irlba(A = object, nv = npcs, ...)
-        total.variance <- sum(RowVar(x = t(x = object)))
-        sdev <- pca_rv$d/sqrt(max(1, nrow(x = object) - 1))
-        if (weight.by.var) {
+        total.variance <- sum(colVars(object))
+        npcs <- min(npcs, ncol(object)-1L)
+        pca_rv <- pca_func(object, k=npcs, center=FALSE, scale=FALSE,
+            deferred=FALSE, fold=1)
+        sdev <- pca_rv$d / sqrt(max(1L, nrow(object)-1L))
+        if (weight.by.var)
+        {
             feature.loadings <- pca_rv$u %*% diag(pca_rv$d)
-        } else{
+        } else {
             feature.loadings <- pca_rv$u
         }
         cell.embeddings <- pca_rv$v
-
     } else {
         total.variance <- sum(rowVars(object))
-        if (approx)
+        npcs <- min(npcs, nrow(object)-1L)
+        pca_rv <- pca_func(t(object), k=npcs, center=FALSE, scale=FALSE,
+            deferred=FALSE, fold=1)
+        feature.loadings <- pca_rv$v
+        sdev <- pca_rv$d / sqrt(max(1L, ncol(object)-1L))
+        if (weight.by.var)
         {
-            npcs <- min(npcs, nrow(object)-1L)
-            # pca_rv <- irlba(A = t(x = object), nv = npcs, ...)
-            pca_rv <- BiocSingular::runIrlbaSVD(t(object),
-                k=npcs, center=FALSE, scale=FALSE, deferred=FALSE, fold=1)
-            feature.loadings <- pca_rv$v
-            sdev <- pca_rv$d / sqrt(max(1L, ncol(object)-1L))
-            if (weight.by.var)
-            {
-                cell.embeddings <- pca_rv$u %*% diag(pca_rv$d)
-            } else {
-                cell.embeddings <- pca_rv$u
-            }
+            cell.embeddings <- pca_rv$u %*% diag(pca_rv$d)
         } else {
-            npcs <- min(npcs, nrow(object))
-            pca_rv <- prcomp(x = t(object), rank. = npcs, ...)
-            feature.loadings <- pca_rv$rotation
-            sdev <- pca_rv$sdev
-            if (weight.by.var)
-            {
-                cell.embeddings <- pca_rv$x
-            } else {
-                cell.embeddings <- pca_rv$x / (pca_rv$sdev[1:npcs] * sqrt(x = ncol(x = object) - 1))
-            }
+            cell.embeddings <- pca_rv$u
         }
     }
 

@@ -44,6 +44,7 @@ scGetAssayFromGDS <- function(fn, verbose=TRUE)
         counts = m0, data = m0,
         counts2 = m, data2 = m,
         scale.data = new(Class="matrix"),
+        scale.data2 = NULL,
         meta.features = init.meta.features,
         misc = list())
     return(rv)
