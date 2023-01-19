@@ -5,7 +5,7 @@
 # Description:
 #     Large-scale single-cell RNA-seq data manipulation with GDS files
 #
-# Copyright (C) 2020-2022    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
+# Copyright (C) 2022-2023    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
 # License: GPL-3
 #
 

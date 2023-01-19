@@ -242,7 +242,7 @@ x_write_gdsn <- function(mat, gdsn, st=1L, scale.max=10, verbose=TRUE)
 ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, block.size=1000,
-    min.cells.to.block=3000, use_gds=FALSE, verbose=TRUE, ...)
+    min.cells.to.block=3000, use_gds=TRUE, verbose=TRUE, ...)
 {
     # check
     CheckDots(...)
@@ -403,7 +403,6 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
             scaled.data <- scaled.data[, i]
         }
         dimnames(scaled.data) <- object.names
-        scaled.data <- scObj(scaled.data)
     }
 
     return(scaled.data)
