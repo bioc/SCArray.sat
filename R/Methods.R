@@ -82,88 +82,12 @@ SetAssayData.SCArrayAssay <- function(object,
         }
     }
     if (!is.vector(rownames(new.data)))
-    {
         rownames(new.data) <- as.vector(rownames(new.data))
-    }
     if (!is.vector(colnames(new.data)))
-    {
         colnames(new.data) <- as.vector(colnames(new.data))
-    }
     # set
     slot(object, .redirect_slot(slot)) <- new.data
     return(object)
-}
-
-
-
-####  Methods -- CreateSeuratObject()  ####
-
-CreateSeuratObject.SCArrayAssay <- function(counts, project='SeuratProject',
-    assay='RNA', names.field=1, names.delim='_', meta.data=NULL, ...)
-{
-  if (!is.null(x = meta.data)) {
-    if (is.null(x = rownames(x = meta.data))) {
-      stop("Row names not set in metadata. Please ensure that rownames of metadata match column names of data matrix")
-    }
-    if (length(x = setdiff(x = rownames(x = meta.data), y = colnames(x = counts)))) {
-      warning("Some cells in meta.data not present in provided counts matrix.")
-      meta.data <- meta.data[intersect(x = rownames(x = meta.data), y = colnames(x = counts)), , drop = FALSE]
-    }
-    if (is.data.frame(x = meta.data)) {
-      new.meta.data <- data.frame(row.names = colnames(x = counts))
-      for (ii in 1:ncol(x = meta.data)) {
-        new.meta.data[rownames(x = meta.data), colnames(x = meta.data)[ii]] <- meta.data[, ii, drop = FALSE]
-      }
-      meta.data <- new.meta.data
-    }
-  }
-  # Check assay key
-  if (!length(x = Key(object = counts)) || !nchar(x = Key(object = counts))) {
-    Key(object = counts) <- SeuratObject:::UpdateKey(key = tolower(x = assay))
-  }
-  assay.list <- list(counts)
-  names(x = assay.list) <- assay
-  # Set idents
-  idents <- factor(x = unlist(x = lapply(
-    X = colnames(x = counts),
-    FUN = SeuratObject:::ExtractField,
-    field = names.field,
-    delim = names.delim
-  )))
-  if (any(is.na(x = idents))) {
-    warning(
-      "Input parameters result in NA values for initial cell identities. Setting all initial idents to the project name",
-      call. = FALSE,
-      immediate. = TRUE
-    )
-  }
-  # if there are more than 100 idents, set all idents to ... name
-  ident.levels <- length(x = unique(x = idents))
-  if (ident.levels > 100 || ident.levels == 0 || ident.levels == length(x = idents)) {
-    idents <- rep.int(x = factor(x = project), times = ncol(x = counts))
-  }
-  names(x = idents) <- colnames(x = counts)
-  object <- new(
-    Class = 'Seurat',
-    assays = assay.list,
-    meta.data = data.frame(row.names = colnames(x = counts)),
-    active.assay = assay,
-    active.ident = idents,
-    project.name = project,
-    version = packageVersion(pkg = 'SeuratObject')
-  )
-  object[['orig.ident']] <- idents
-  # Calculate nCount and nFeature
-  # n.calc <- CalcN(object = counts)
-  # if (!is.null(x = n.calc)) {
-  #   names(x = n.calc) <- paste(names(x = n.calc), assay, sep = '_')
-  #   object[[names(x = n.calc)]] <- n.calc
-  # }
-  # Add metadata
-  if (!is.null(x = meta.data)) {
-    object <- AddMetaData(object = object, metadata = meta.data)
-  }
-  return(object)
 }
 
 
@@ -203,37 +127,36 @@ NormalizeData.SC_GDSMatrix <- function(object,
 
 ####  Methods -- ScaleData()  ####
 
-x_row_scale <- function(mat, center=TRUE, scale=TRUE)
+x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
 {
-    if (center) r_m <- rowMeans(mat)
+    if (center) r_m <- rowMeans(x)
     if (scale)
     {
         if (center)
-            rsd <- rowSds(mat, center=r_m)
+            rsd <- rowSds(x, center=r_m)
         else
-            rsd <- rowSds(mat, center=rep(0, nrow(mat)))
+            rsd <- rowSds(x, center=rep(0, nrow(x)))
     }
-    if (center) mat <- mat - r_m
-    if (scale) mat <- mat/rsd
-    return(mat)
+    if (center) x <- x - r_m
+    if (scale) x <- x / rsd
+    scSetMax(x, scale.max)    # set a bound
 }
 
-x_write_gdsn <- function(mat, gdsn, st=1L, scale.max=10, verbose=TRUE)
+x_write_gdsn <- function(mat, gdsn, st=1L, verbose=TRUE)
 {
     stopifnot(is(mat, "DelayedMatrix"))
     stopifnot(is(gdsn, "gdsn.class"))
     if (verbose)
         pb <- txtProgressBar(min=st, max=st+ncol(mat), style=3L, file=stderr())
     # block write
-    blockReduce(function(bk, i, gdsn, vmax)
+    blockReduce(function(bk, i, gdsn)
     {
-        bk[bk > vmax] <- vmax  # set a bound
         bk[is.na(bk)] <- 0
         write.gdsn(gdsn, bk, start=c(1L, i), count=c(-1L, ncol(bk)))
         i <- i + ncol(bk)
         if (verbose) setTxtProgressBar(pb, i)
         i
-    }, mat, init=st, grid=colAutoGrid(mat), gdsn=gdsn, vmax=scale.max)
+    }, mat, init=st, grid=colAutoGrid(mat), gdsn=gdsn)
     # finally
     if (verbose) close(pb)
     invisible()
@@ -246,7 +169,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 {
     # check
     CheckDots(...)
-    features <- features %||% rownames(object)
+    if (is.null(features)) features <- rownames(object)
     features <- intersect(features, rownames(object))
     object <- object[features, , drop=FALSE]
     object.names <- dimnames(object)
@@ -256,7 +179,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     #     features = features,
     #     min.cells.to.block = min.cells.to.block
     # ))
-    split.by <- split.by %||% TRUE
+    if (is.null(split.by)) split.by <- TRUE
     split.cells <- split(colnames(object), split.by)
     CheckGC()
 
@@ -337,7 +260,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     }
 
     # output variable
-    if (is.character(use_gds))
+    if (is.character(use_gds) && length(split.cells)>1L)
     {
         # use DelayedMatrix
         if (verbose) message("Writing to ", sQuote(use_gds))
@@ -366,19 +289,19 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         ii <- match(split.cells[[x]], colnames(object))
         m <- object[, ii, drop=FALSE]
         # center & scale, m is DelayedMatrix
-        m <- x_row_scale(m, do.center, do.scale)
+        m <- x_row_scale(m, do.center, do.scale, scale.max)
         # save
         if (is.character(use_gds))
         {
-            x_write_gdsn(m, out_nd, length(gds_colnm)+1L, scale.max, verbose)
+            x_write_gdsn(m, out_nd, length(gds_colnm)+1L, verbose)
             gds_colnm <- c(gds_colnm, split.cells[[x]])
         } else {
+            # check: TODO
             if (verbose)
                 pb <- txtProgressBar(min=0, max=length(ii), style=3, file=stderr())
             for (k in seq_along(ii))
             {
                 v <- m[, k, drop=TRUE]
-                v[v > scale.max] <- scale.max  # set a bound
                 v[is.na(v)] <- 0
                 scaled.data[, ii[k]] <- v
                 if (verbose && (k %% 1000L==1L))
@@ -487,7 +410,7 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
         stop("Data has not been scaled. Please run ScaleData and retry.")
 
     # filter (need var > 0)
-    features <- features %||% VariableFeatures(object)
+    if (is.null(features)) features <- VariableFeatures(object)
     features.keep <- unique(features[features %in% rownames(data.use)])
     if (length(features.keep) < length(features))
     {
