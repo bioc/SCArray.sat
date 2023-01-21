@@ -13,12 +13,15 @@
 #######################################################################
 # Class definition
 
+# Restrict to either dgCMatrix or SC_GDSMatrix
 setClassUnion(name="UnionMatrix",
     members=c("dgCMatrix", "SC_GDSMatrix"))
 
+# Restrict to NULL, dense matrix or SC_GDSMatrix
 setClassUnion(name="UnionMatrix2",
     members=c("NULL", "matrix", "SC_GDSMatrix"))
 
+# Extend Seurat Assay class, inherited from Seurat::Assay
 setClass("SCArrayAssay", contains="Assay",
     slots = c(
         counts2 = "UnionMatrix",
@@ -26,4 +29,3 @@ setClass("SCArrayAssay", contains="Assay",
         scale.data2 = "UnionMatrix2"
     )
 )
-
