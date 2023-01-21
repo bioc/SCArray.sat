@@ -28,7 +28,7 @@ x_check <- function(x, msg) SCArray:::x_check(x, msg)
 
 
 
-scGetAssayFromGDS <- function(fn, verbose=TRUE)
+scGetAssayGDS <- function(fn, verbose=TRUE)
 {
     # load gds data
     sce <- scExperiment(fn)

@@ -1,11 +1,11 @@
-\name{scGetAssayFromGDS}
-\alias{scGetAssayFromGDS}
+\name{scGetAssayGDS}
+\alias{scGetAssayGDS}
 \title{Get Assay object}
 \description{
     Gets Seurat Assay object.
 }
 \usage{
-scGetAssayFromGDS(fn, verbose=TRUE)
+scGetAssayGDS(fn, verbose=TRUE)
 }
 \arguments{
     \item{fn}{a file name for the GDS file}
@@ -24,7 +24,7 @@ scGetAssayFromGDS(fn, verbose=TRUE)
 # raw count data in a GDS file
 fn <- system.file("extdata", "LaMannoBrainData.gds", package="SCArray")
 
-assay <- scGetAssayFromGDS(fn)
+assay <- scGetAssayGDS(fn)
 assay
 class(assay)
 
