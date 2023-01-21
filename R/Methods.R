@@ -19,6 +19,19 @@
     switch(nm, data="data2", counts="counts2", scale.data="scale.data2", nm)
 }
 
+.find_filename <- function(fn)
+{
+    stopifnot(is.character(fn), length(fn)==1L, !is.na(fn))
+    stopifnot(grepl("%d", fn, fixed=TRUE))
+    i <- 1L
+    s <- gsub("%d", "", fn, fixed=TRUE)
+    while (file.exists(s))
+    {
+        i <- i + 1L
+        s <- sprintf(fn, i)
+    }
+    s
+}
 
 
 #######################################################################
@@ -133,30 +146,29 @@ x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
     if (scale)
     {
         if (center)
-            rsd <- rowSds(x, center=r_m)
+            rsd <- 1/rowSds(x, center=r_m)
         else
-            rsd <- rowSds(x, center=rep(0, nrow(x)))
+            rsd <- 1/rowSds(x, center=rep(0, nrow(x)))
+        rsd[!is.finite(rsd)] <- 0
     }
     if (center) x <- x - r_m
-    if (scale) x <- x / rsd
+    if (scale) x <- x * rsd
     scSetMax(x, scale.max)    # set a bound
 }
 
-x_write_gdsn <- function(mat, gdsn, st=1L, verbose=TRUE)
+x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
 {
     stopifnot(is(mat, "DelayedMatrix"))
     stopifnot(is(gdsn, "gdsn.class"))
     if (verbose)
-        pb <- txtProgressBar(min=st, max=st+ncol(mat), style=3L, file=stderr())
+        pb <- txtProgressBar(min=0, max=ncol(mat), style=3L, file=stderr())
     # block write
     blockReduce(function(bk, i, gdsn)
     {
-        bk[is.na(bk)] <- 0
-        write.gdsn(gdsn, bk, start=c(1L, i), count=c(-1L, ncol(bk)))
-        i <- i + ncol(bk)
-        if (verbose) setTxtProgressBar(pb, i)
-        i
-    }, mat, init=st, grid=colAutoGrid(mat), gdsn=gdsn)
+        append.gdsn(gdsn, bk)
+        if (verbose) setTxtProgressBar(pb, i+ncol(bk))
+        i + ncol(bk)
+    }, mat, init=0L, grid=colAutoGrid(mat), gdsn=gdsn)
     # finally
     if (verbose) close(pb)
     invisible()
@@ -186,15 +198,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     if (is.logical(use_gds))
     {
         if (isTRUE(use_gds))
-        {
-            use_gds <- "_scale_data.gds"
-            i <- 1L
-            while (file.exists(use_gds))
-            {
-                i <- i + 1L
-                use_gds <- sprintf("_scale_data%d.gds", i)
-            }
-        }
+            use_gds <- .find_filename("_scale_data%d.gds")
     } else if (!is.character(use_gds))
         stop("'use_gds' should be FALSE, TRUE or a file name.")
 
@@ -260,6 +264,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     }
 
     # output variable
+    outf <- NULL
     if (is.character(use_gds) && length(split.cells)>1L)
     {
         # use DelayedMatrix
@@ -270,64 +275,72 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         } else {
             outf <- createfn.gds(use_gds)
         }
-        on.exit(closefn.gds(outf))
+        on.exit(closefn.gds(outf))  # in case fail
         out_nd <- add.gdsn(outf, "scale.data", storage="double",
-            valdim=dim(object), replace=TRUE)
-        gds_colnm <- NULL
-    } else {
-        scaled.data <- matrix(NA_real_, nrow=nrow(object), ncol=ncol(object),
-            dimnames=object.names)
+            valdim=c(nrow(object), 0L), replace=TRUE)
     }
-    # scale
-    for (x in names(split.cells))
+
+    # Scale each cell split
+    lst <- lapply(names(split.cells), function(x)
     {
+        m <- object
+        # subsetting
+        if (!identical(split.cells[[x]], colnames(m)))
+        {
+            ii <- match(split.cells[[x]], colnames(object))
+            m <- object[, ii, drop=FALSE]
+        }
         if (verbose)
         {
-            if (length(split.cells)>1 && (do.scale || do.center))
-                message(gsub('matrix', 'from split ', msg), x)
+            if (length(split.cells)>1L && (do.scale || do.center))
+            {
+                message("Data split (", class(m)[1L], " [",
+                    paste(dim(m), collapse=","), "]): ", x)
+            }
         }
-        ii <- match(split.cells[[x]], colnames(object))
-        m <- object[, ii, drop=FALSE]
         # center & scale, m is DelayedMatrix
         m <- x_row_scale(m, do.center, do.scale, scale.max)
         # save
-        if (is.character(use_gds))
+        if (!is.null(outf))
         {
-            x_write_gdsn(m, out_nd, length(gds_colnm)+1L, verbose)
-            gds_colnm <- c(gds_colnm, split.cells[[x]])
+            x_append_gdsn(m, out_nd, verbose)
+            split.cells[[x]]  # output
+        } else if (is.character(use_gds))
+        {
+            m  # output
         } else {
-            # check: TODO
-            if (verbose)
-                pb <- txtProgressBar(min=0, max=length(ii), style=3, file=stderr())
-            for (k in seq_along(ii))
-            {
-                v <- m[, k, drop=TRUE]
-                v[is.na(v)] <- 0
-                scaled.data[, ii[k]] <- v
-                if (verbose && (k %% 1000L==1L))
-                    setTxtProgressBar(pb, k)
-            }
-            if (verbose)
-            {
-                setTxtProgressBar(pb, length(ii))
-                close(pb)
-            }
-            CheckGC()
+            # in-memory
+            as.matrix(m)  # output
         }
-    }
-    if (is.character(use_gds))
+    })
+
+    # output
+    if (!is.null(outf))
     {
         on.exit()
         closefn.gds(outf)  # close the file first
         scaled.data <- scArray(use_gds, "scale.data")
-        if (any(gds_colnm != colnames(object)))
+        gds_colnm <- unlist(lst)
+        if (!identical(gds_colnm, colnames(object)))
         {
             i <- match(colnames(object), gds_colnm)
             scaled.data <- scaled.data[, i]
         }
         dimnames(scaled.data) <- object.names
+    } else if (is.character(use_gds))
+    {
+        # length(split.cells) == 1, and a single DelayedMatrix
+        scaled.data <- lst[[1L]]
+    } else {
+        # in-memory
+        scaled.data <- do.call(cbind, lst)
+        gds_colnm <- colnames(scaled.data)
+        if (!identical(gds_colnm, colnames(object)))
+        {
+            i <- match(colnames(object), gds_colnm)
+            scaled.data <- scaled.data[, i]
+        }
     }
-
     return(scaled.data)
 }
 
@@ -388,7 +401,7 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         rownames(hvf.info) <- rownames(object)
         colnames(hvf.info) <- paste0('vst.', colnames(hvf.info))
     } else {
-        stop("selection.method!=vst, not implemented yet.")
+        stop("selection.method != 'vst', not implemented yet.")
     }
     return(hvf.info)
 }
@@ -460,8 +473,10 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
 {
     x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
 
-    if (!is.null(seed.use)) set.seed(seed.use)
+    # BiocSingular SVD functions
     pca_func <- if (isTRUE(approx)) runIrlbaSVD else runExactSVD
+
+    if (!is.null(seed.use)) set.seed(seed.use)
     if (rev.pca)
     {
         total.variance <- sum(colVars(object))
@@ -506,9 +521,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     if (verbose)
     {
         msg <- capture.output(print(
-            x = reduction.data,
-            dims = ndims.print,
-            nfeatures = nfeatures.print
+            x=reduction.data, dims=ndims.print, nfeatures=nfeatures.print
         ))
         message(paste(msg, collapse='\n'))
     }
