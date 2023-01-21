@@ -54,11 +54,13 @@ SetAssayData.SCArrayAssay <- function(object,
     slot <- match.arg(slot)
     if (!IsMatrixEmpty(new.data))
     {
-        if (any(grepl('_', rownames(new.data), fixed=TRUE)))
+        s <- rownames(new.data)
+        if (any(grepl('_', s, fixed=TRUE)))
         {
-            warning("Feature names cannot have underscores ('_'), replacing with dashes ('-')",
+            warning(
+                "Feature names cannot have underscores ('_'), replacing with dashes ('-')",
                 call.=FALSE, immediate.=TRUE)
-            rownames(new.data) <- gsub('_', '-', rownames(new.data), fixed=TRUE)
+            rownames(new.data) <- gsub('_', '-', s, fixed=TRUE)
         }
         if (ncol(new.data) != ncol(object))
         {
@@ -73,13 +75,14 @@ SetAssayData.SCArrayAssay <- function(object,
                 call.=FALSE, immediate.=TRUE)
         } else if (slot %in% c('counts', 'data') && nrow(new.data)!=num.counts)
         {
-            warning("The new data doesn't have the same number of features as the current data",
+            warning(
+                "The new data doesn't have the same number of features as the current data",
                 call.=FALSE, immediate.=TRUE)
         }
         if (!all(rownames(new.data) %in% counts.names))
         {
             warning("Adding features not currently present in the object",
-            call.=FALSE, immediate.=TRUE)
+                call.=FALSE, immediate.=TRUE)
         }
         new.features <- na.omit(match(counts.names, rownames(new.data)))
         new.cells <- colnames(new.data)
