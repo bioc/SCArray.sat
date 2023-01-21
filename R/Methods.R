@@ -177,7 +177,7 @@ x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
 ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, use_gds=TRUE, verbose=TRUE,
-    ...)
+    block.size=1000, min.cells.to.block=3000, ...)
 {
     # check
     CheckDots(...)
@@ -350,13 +350,14 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 .row_var_std <- function(mat, mu, sd, vmax, verbose)
 {
     stopifnot(is(mat, "SC_GDSMatrix"))
+    inv <- 1 / sd
+    inv[!is.finite(inv)] <- 0
     # block read
-    v <- blockReduce(function(bk, v, mu, sd, vmax)
+    v <- blockReduce(function(bk, v, mu, inv, vmax)
     {
-        b <- pmin(vmax, (bk - mu) / sd)^2L
-        dim(b) <- dim(bk)
+        b <- pmin((bk - mu)*inv, vmax)^2L
         v + rowSums(b)
-    }, mat, init=0, grid=colAutoGrid(mat), mu=mu, sd=sd, vmax=vmax)
+    }, mat, init=0, grid=colAutoGrid(mat), mu=mu, inv=inv, vmax=vmax)
     v[!is.finite(v)] <- 0
     # output
     v / (ncol(mat)-1L)
