@@ -5,10 +5,11 @@
     Gets Seurat Assay object.
 }
 \usage{
-scGetAssayGDS(fn, verbose=TRUE)
+scGetAssayGDS(gdsfn, check=TRUE, verbose=TRUE)
 }
 \arguments{
-    \item{fn}{a file name for the GDS file}
+    \item{gdsfn}{a file name for the GDS file}
+    \item{check}{if \code{TRUE}, check the feature names}
     \item{verbose}{if \code{TRUE}, show information}
 }
 \value{
@@ -22,7 +23,7 @@ scGetAssayGDS(fn, verbose=TRUE)
 
 \examples{
 # raw count data in a GDS file
-fn <- system.file("extdata", "LaMannoBrainData.gds", package="SCArray")
+fn <- system.file("extdata", "example.gds", package="SCArray")
 
 assay <- scGetAssayGDS(fn)
 assay

@@ -28,16 +28,33 @@ x_check <- function(x, msg) SCArray:::x_check(x, msg)
 
 
 
-scGetAssayGDS <- function(fn, verbose=TRUE)
+scGetAssayGDS <- function(gdsfn, check=TRUE, verbose=TRUE)
 {
+    # check
+    stopifnot(is.character(gdsfn), length(gdsfn)==1L)
+    stopifnot(is.logical(check), length(check)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+    verbose <- isTRUE(verbose)
     # load gds data
-    sce <- scExperiment(fn)
+    if (verbose) .cat("Input: ", gdsfn)
+    sce <- scExperiment(gdsfn)
     m <- counts(sce)
+    if (verbose)
+        .cat("    counts: ", NROW(m), " x ", NCOL(m))
+    # check feature IDs
+    s <- rownames(m)
+    if (isTRUE(check) && any(grepl('_', s)))
+    {
+        warning(
+            "Feature names cannot have underscores ('_'), replacing with dashes ('-')",
+            immediate. = TRUE
+        )
+        rownames(m) <- gsub('_', '-', s)
+    }
     # output
-    rv <- new(Class = "SCArrayAssay",
+    new(Class = "SCArrayAssay",
         counts2 = m, data2 = m, scale.data2 = NULL,
         meta.features = data.frame(row.names=rownames(m)),
         misc = list())
-    return(rv)
 }
 
