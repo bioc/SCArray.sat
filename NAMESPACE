@@ -32,7 +32,7 @@ importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
 # Import the classes and methods in SCArray
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
 importFrom(SCArray, scArray, scExperiment, scObj, scSetMax,
-    colSums, colVars, rowMeans, rowVars, rowSds)
+    colSums, colVars, rowMeans, rowVars, rowSds, scRowMeanVar)
 
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 

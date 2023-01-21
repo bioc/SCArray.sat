@@ -4,8 +4,9 @@ Title: Large-scale single-cell RNA-seq data manipulation with GDS files and
         Seurat
 Version: 0.99.0
 Date: 2023-01-16
-Depends: methods, gdsfmt (>= 1.35.4), SCArray (>= 1.7.4)
-Imports: S4Vectors, utils, DelayedArray, SeuratObject, Seurat, BiocSingular
+Depends: methods, SCArray (>= 1.7.4)
+Imports: S4Vectors, utils, gdsfmt, DelayedArray, SeuratObject, Seurat,
+        BiocSingular
 Suggests: BiocGenerics, RUnit, knitr, markdown, rmarkdown
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="xiuwen.zheng@abbvie.com",

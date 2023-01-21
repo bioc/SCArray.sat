@@ -142,17 +142,25 @@ NormalizeData.SC_GDSMatrix <- function(object,
 
 x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
 {
-    if (center) r_m <- rowMeans(x)
-    if (scale)
+    if (center && scale)
     {
-        if (center)
-            rsd <- 1/rowSds(x, center=r_m)
-        else
-            rsd <- 1/rowSds(x, center=rep(0, nrow(x)))
+        v <- scRowMeanVar(x, na.rm=TRUE)
+        m <- v[,1L]
+        rsd <- 1 / sqrt(v[,2L])
         rsd[!is.finite(rsd)] <- 0
+        x <- (x - m) * rsd
+    } else {
+        if (center)
+        {
+            m <- rowMeans(x)
+            x <- x - m
+        } else if (scale)
+        {
+            rsd <- 1 / rowSds(x, center=rep(0, nrow(x)))
+            rsd[!is.finite(rsd)] <- 0
+            x <- x * rsd
+        }
     }
-    if (center) x <- x - r_m
-    if (scale) x <- x * rsd
     scSetMax(x, scale.max)    # set a bound
 }
 
@@ -347,20 +355,32 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
 ####  Methods -- FindVariableFeatures()  ####
 
-.row_var_std <- function(mat, mu, sd, vmax, verbose)
+.row_var_std <- function(x, mu, sd, vmax, verbose)
 {
-    stopifnot(is(mat, "SC_GDSMatrix"))
+    # check
+    stopifnot(is(x, "SC_GDSMatrix"))
+    # initialize
     inv <- 1 / sd
     inv[!is.finite(inv)] <- 0
+    if (verbose)
+        pb <- txtProgressBar(min=0L, max=ncol(x), style=3L, file=stderr())
     # block read
-    v <- blockReduce(function(bk, v, mu, inv, vmax)
+    v <- blockReduce(function(bk, v, mu, inv, vmax, vb)
     {
         b <- pmin((bk - mu)*inv, vmax)^2L
+        if (vb)
+            setTxtProgressBar(pb, start(currentViewport())[2L])
         v + rowSums(b)
-    }, mat, init=0, grid=colAutoGrid(mat), mu=mu, inv=inv, vmax=vmax)
-    v[!is.finite(v)] <- 0
+    }, x, 0, grid=colAutoGrid(x), mu=mu, inv=inv, vmax=vmax, vb=verbose)
+    # finally
+    if (verbose)
+    {
+        setTxtProgressBar(pb, ncol(x))
+        close(pb)
+    }
     # output
-    v / (ncol(mat)-1L)
+    v[!is.finite(v)] <- 0
+    v / (ncol(x) - 1L)
 }
 
 FindVariableFeatures.SC_GDSMatrix <- function(object,
@@ -382,8 +402,8 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
             clip.max <- sqrt(ncol(object))
         if (verbose)
             cat("Calculating gene variances\n")
-        hvf.info <- data.frame(mean=rowMeans(object))
-        hvf.info$variance <- rowVars(object)
+        v <- scRowMeanVar(object)
+        hvf.info <- data.frame(mean=v[,1L], variance=v[,2L])
         hvf.info$variance[is.na(hvf.info$variance)] <- 0
         hvf.info$variance.expected <- 0
         hvf.info$variance.standardized <- 0
