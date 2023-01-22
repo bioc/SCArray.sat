@@ -1,24 +1,26 @@
 Package: SCArray.sat
 Type: Package
-Title: Large-scale single-cell RNA-seq data manipulation with GDS files and
+Title: Large-scale single-cell RNA-seq data manipulation using GDS files and
         Seurat
 Version: 0.99.0
-Date: 2023-01-16
+Date: 2023-01-21
 Depends: methods, SCArray (>= 1.7.4)
-Imports: S4Vectors, utils, gdsfmt, DelayedArray, SeuratObject, Seurat,
-        BiocSingular
+Imports: S4Vectors, utils, gdsfmt, DelayedArray, BiocSingular,
+        SeuratObject (>= 4.0), Seurat (>= 4.0)
 Suggests: BiocGenerics, RUnit, knitr, markdown, rmarkdown
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
-        email="xiuwen.zheng@abbvie.com",
-        comment=c(ORCID="0000-0002-1390-0708")))
-Description: Provides large-scale single-cell RNA-seq data manipulation using
-        Genomic Data Structure (GDS) files. It combines dense and sparse
-        matrices stored in GDS files and the Bioconductor infrastructure
-        framework (SingleCellExperiment and DelayedArray) to provide
-        out-of-memory data storage and large-scale manipulation using the R
-        programming language.
+        email="xiuwen.zheng@abbvie.com", comment=c(ORCID="0000-0002-1390-0708")),
+        person("Seurat contributors", role="ctb",
+        comment="for Seurat data structure and methods"))
+Description: Extends Seurat classes and functions to support GDS files as a
+        DelayedArray backend for data representation. It provides the
+        SCArrayAssay class (inherited from the Seurat Assay) to wrap the
+        DelayedMatrix-based raw counts, normalized expression values and scaled
+        data matrix. It is designed to integrate seamlessly with the
+        SeuratObject and Seurat packages to provide the downstream data
+        analysis, with the optimized algorithms for GDS data files.
 License: GPL-3
 VignetteBuilder: knitr
 ByteCompile: TRUE
-URL: https://github.com/AbbVie-ComputationalGenomics/SCArray
+URL: https://github.com/AbbVie-ComputationalGenomics/SCArray.sat
 biocViews: Infrastructure, DataRepresentation, DataImport, SingleCell, RNASeq

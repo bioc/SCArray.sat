@@ -17,7 +17,8 @@ S3method(RunPCA, SC_GDSMatrix)
 import(methods)
 import(S4Vectors)
 importFrom(DelayedArray, blockReduce, colAutoGrid, sweep)
-importFrom(gdsfmt, createfn.gds, openfn.gds, closefn.gds, add.gdsn, append.gdsn)
+importFrom(gdsfmt, add.gdsn, append.gdsn, closefn.gds, createfn.gds,
+    openfn.gds)
 importFrom(utils, capture.output, packageVersion, txtProgressBar,
     setTxtProgressBar)
 importFrom(stats, loess)
