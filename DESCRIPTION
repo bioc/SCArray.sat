@@ -1,6 +1,6 @@
 Package: SCArray.sat
 Type: Package
-Title: Large-scale single-cell RNA-seq data manipulation using GDS files and
+Title: Large-scale single-cell RNA-seq data analysis using GDS files and
         Seurat
 Version: 0.99.0
 Date: 2023-01-21
