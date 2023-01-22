@@ -1,7 +1,4 @@
 # Export the following names
-# useDynLib(SCArray.sat, )
-
-# Export all names
 exportPattern("^sc*")
 exportClasses(SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
