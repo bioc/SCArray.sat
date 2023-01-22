@@ -23,6 +23,7 @@ importFrom(utils, capture.output, packageVersion, txtProgressBar,
     setTxtProgressBar)
 importFrom(stats, loess)
 importFrom(BiocGenerics, counts)
+importFrom(SummarizedExperiment, rowData)
 
 # Import the classes and methods in SeuratObject / Seurat
 importClassesFrom(SeuratObject, Assay)

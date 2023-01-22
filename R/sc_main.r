@@ -28,13 +28,15 @@ x_check <- function(x, msg) SCArray:::x_check(x, msg)
 
 
 
-scGetAssayGDS <- function(gdsfn, check=TRUE, verbose=TRUE)
+#######################################################################
+
+scGetAssayGDS <- function(gdsfn, row_data=TRUE, check=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfn), length(gdsfn)==1L)
     stopifnot(is.logical(check), length(check)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    verbose <- isTRUE(verbose)
+    stopifnot(is.logical(row_data) || is.data.frame(row_data))
     # load gds data
     if (verbose) .cat("Input: ", gdsfn)
     sce <- scExperiment(gdsfn)
@@ -51,10 +53,22 @@ scGetAssayGDS <- function(gdsfn, check=TRUE, verbose=TRUE)
         )
         rownames(m) <- gsub('_', '-', s)
     }
+    # meta data
+    meta_data <- data.frame(row.names=rownames(m))
+    if (isTRUE(row_data))
+    {
+        v <- rowData(sce)
+        if (!is.null(v) && ncol(v)>0L)
+        {
+            v <- as.data.frame(v)
+            if (!identical(rownames(m), rownames(v)))
+                stop("The rownames of 'rowData()' should be the same as 'count' matrix.")
+            meta_data <- v
+        }
+    }
     # output
     new(Class = "SCArrayAssay",
         counts2 = m, data2 = m, scale.data2 = NULL,
-        meta.features = data.frame(row.names=rownames(m)),
-        misc = list())
+        meta.features = meta_data, misc = list())
 }
 
