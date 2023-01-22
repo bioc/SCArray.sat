@@ -1,0 +1,49 @@
+---
+title: "Large-scale single-cell RNA-seq data analysis using GDS files and Seurat"
+author: "Dr. Xiuwen Zheng (Genomics Research Center, AbbVie)"
+date: "Jan 2023"
+output:
+    html_document:
+        theme: default
+        highlight: tango
+        toc: yes
+vignette: >
+    %\VignetteIndexEntry{scRNA-seq data analysis with GDS files and Seurat}
+    %\VignetteKeywords{scRNAseq, GDS, Seurat}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
+---
+
+
+## Introduction
+
+The SCArray.sat package extends Seurat classes and functions to support [GDS files](http://www.bioconductor.org/packages/gdsfmt) as a DelayedArray backend for data representation. It provides the SCArrayAssay class (inherited from the Seurat Assay) to wrap the DelayedMatrix-based raw counts, normalized expression values and scaled data matrix. It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide the downstream data analysis, with the optimized algorithms for GDS data files.
+
+![**Figure 1**: Workflow of SCArray](scarray_fig.svg)
+
+
+## Installation
+
+* Bioconductor repository
+
+To install this package, start R and enter:
+```{R, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("SCArray.sat")
+```
+
+
+
+
+
+## Session Info
+
+```{r}
+# print version information about R, the OS and attached or loaded packages
+sessionInfo()
+```
+
+```{r echo=FALSE}
+unlink("test.gds", force=TRUE)
+```
