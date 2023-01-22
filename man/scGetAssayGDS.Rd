@@ -9,8 +9,8 @@ scGetAssayGDS(gdsfn, row_data=TRUE, check=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfn}{a file name for the GDS file}
-    \item{row_data}{if \code{TRUE}, add \code{rowData()} to the 'meta.features'
-        field of the Seurat Assay}
+    \item{row_data}{if \code{TRUE}, add \code{rowData()} to the feature-level
+        meta data of the Seurat Assay}
     \item{check}{if \code{TRUE}, check the feature names}
     \item{verbose}{if \code{TRUE}, show information}
 }
