@@ -3,7 +3,7 @@
 # Package name: SCArray.sat
 #
 # Description:
-#     Large-scale single-cell RNA-seq data manipulation with GDS files
+#     Large-scale single-cell RNA-seq data analysis using GDS files and Seurat
 #
 # Copyright (C) 2022-2023    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
 # License: GPL-3
@@ -115,7 +115,7 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
             counts <- counts[which(num.cells >= min.cells), ]
         }
         # set data
-        data <- counts <- scObj(counts)
+        data <- counts <- scObj(counts)  # wrap SC_GDSMatrix if needed
 
     } else if (!missing(data))
     {
@@ -137,7 +137,7 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
                 call.=FALSE, immediate.=TRUE)
         }
         # set data
-        data <- scObj(data)
+        data <- scObj(data)  # wrap SC_GDSMatrix if needed
         counts <- scObj(DelayedArray(new('matrix')))
     }
 

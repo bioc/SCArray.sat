@@ -26,6 +26,7 @@
 # Get the subset of a SCArrayAssay object
 subset.SCArrayAssay <- function(x, cells=NULL, features=NULL, ...)
 {
+    x_msg("Calling subset.SCArrayAssay() ...")
     CheckDots(...)
     # check cells
     if (is.null(cells)) cells <- colnames(x)
@@ -155,4 +156,14 @@ SetAssayData.SCArrayAssay <- function(object,
     slot(object, .redirect_slot(slot)) <- new.data
     return(object)
 }
+
+
+#######################################################################
+# S3 Methods for DelayedMatrix
+
+as.sparse.DelayedMatrix <- function(x, ...)
+{
+    as(x, "sparseMatrix")
+}
+
 

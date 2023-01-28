@@ -1,23 +1,30 @@
+# ================================
 # Export the following names
+
 exportPattern("^sc*")
 exportClasses(SCArrayAssay)
 export(CreateAssayObject2)
 
+# methods for SCArrayAssay
 S3method(subset, SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
+S3method(RunPCA, SCArrayAssay)
 
+# methods for DelayedMatrix
+S3method(as.sparse, DelayedMatrix)
 S3method(CreateSeuratObject, DelayedMatrix)
+
+# methods for SC_GDSMatrix
 S3method(NormalizeData, SC_GDSMatrix)
 S3method(ScaleData, SC_GDSMatrix)
 S3method(FindVariableFeatures, SC_GDSMatrix)
-S3method(RunPCA, SCArrayAssay)
 S3method(RunPCA, SC_GDSMatrix)
 
 
-# ================
-
+# ================================
 # Import all packages listed as Imports or Depends
+
 import(methods)
 import(S4Vectors)
 importFrom(DelayedArray, blockReduce, colAutoGrid, currentViewport, sweep)
@@ -32,8 +39,9 @@ importFrom(SummarizedExperiment, rowData)
 
 # Import the classes and methods in SeuratObject & Seurat
 importClassesFrom(SeuratObject, Assay)
-importFrom(SeuratObject, GetAssayData, SetAssayData, CreateSeuratObject,
-    AddMetaData, IsMatrixEmpty, Key, 'Key<-',
+importFrom(SeuratObject,
+    GetAssayData, SetAssayData, CreateSeuratObject,
+    AddMetaData, IsMatrixEmpty, Key, 'Key<-', as.sparse,
     VariableFeatures, 'VariableFeatures<-',
     CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateDimReducObject)
 importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
