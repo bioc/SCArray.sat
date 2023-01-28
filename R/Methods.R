@@ -13,12 +13,6 @@
 #######################################################################
 # Internal functions
 
-.redirect_slot <- function(nm)
-{
-    stopifnot(is.character(nm), length(nm)==1L)
-    switch(nm, data="data2", counts="counts2", scale.data="scale.data2", nm)
-}
-
 .find_filename <- function(fn)
 {
     stopifnot(is.character(fn), length(fn)==1L, !is.na(fn))
@@ -178,80 +172,6 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
 
 #######################################################################
 # S3/S4 Methods for SCArrayAssay
-
-# S3 method for GetAssayData()
-# Get data matrix from a SCArrayAssay object
-GetAssayData.SCArrayAssay <- function(object,
-    slot=c("data", "scale.data", "counts"), ...)
-{
-    CheckDots(...)
-    slot <- match.arg(slot)
-    slot(object, .redirect_slot(slot))  # output
-}
-
-
-# S3 method for SetAssayData()
-# Set data matrix from a SCArrayAssay object
-SetAssayData.SCArrayAssay <- function(object,
-    slot=c('data', 'scale.data', 'counts'), new.data, ...)
-{
-    # check
-    CheckDots(...)
-    slot <- match.arg(slot)
-    if (!IsMatrixEmpty(new.data))
-    {
-        s <- rownames(new.data)
-        if (any(grepl('_', s, fixed=TRUE)))
-        {
-            warning(
-                "Feature names cannot have underscores ('_'), replacing with dashes ('-')",
-                call.=FALSE, immediate.=TRUE)
-            rownames(new.data) <- gsub('_', '-', s, fixed=TRUE)
-        }
-        if (ncol(new.data) != ncol(object))
-        {
-            stop("The new data doesn't have the same number of cells as the current data",
-                call.=FALSE)
-        }
-        num.counts <- nrow(object)
-        counts.names <- rownames(object)
-        if (slot=='scale.data' && nrow(new.data)>num.counts)
-        {
-            warning("Adding more features than present in current data",
-                call.=FALSE, immediate.=TRUE)
-        } else if (slot %in% c('counts', 'data') && nrow(new.data)!=num.counts)
-        {
-            warning(
-                "The new data doesn't have the same number of features as the current data",
-                call.=FALSE, immediate.=TRUE)
-        }
-        if (!all(rownames(new.data) %in% counts.names))
-        {
-            warning("Adding features not currently present in the object",
-                call.=FALSE, immediate.=TRUE)
-        }
-        new.features <- na.omit(match(counts.names, rownames(new.data)))
-        new.cells <- colnames(new.data)
-        if (!all(new.cells %in% colnames(object)))
-        {
-            stop("All cell names must match current cell names", call.=FALSE)
-        }
-        new.data <- new.data[new.features, colnames(object), drop=FALSE]
-        if (slot %in% c('counts', 'data') && !all(dim(new.data)==dim(object)))
-        {
-            stop("Attempting to add a different number of cells and/or features",
-                call.=FALSE)
-        }
-    }
-    if (!is.vector(rownames(new.data)))
-        rownames(new.data) <- as.vector(rownames(new.data))
-    if (!is.vector(colnames(new.data)))
-        colnames(new.data) <- as.vector(colnames(new.data))
-    # set
-    slot(object, .redirect_slot(slot)) <- new.data
-    return(object)
-}
-
 
 # S3 method for CreateSeuratObject()
 # Create a Seurat Object from a DelayedMatrix
