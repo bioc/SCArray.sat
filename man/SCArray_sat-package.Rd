@@ -3,8 +3,8 @@
 \docType{package}
 \title{Large-scale single-cell RNA-seq data analysis using GDS files and Seurat}
 \description{
-    The package extends Seurat classes and functions to support GDS files as a
-DelayedArray backend for data representation. It provides the SCArrayAssay
+    The package extends the Seurat classes and functions to support GDS files
+as a DelayedArray backend for data representation. It provides the SCArrayAssay
 class (inherited from the Seurat Assay) to wrap the DelayedMatrix-based raw
 counts, normalized expression values and scaled data matrix. It is designed to
 integrate seamlessly with the SeuratObject and Seurat packages to provide the
