@@ -1,14 +1,18 @@
 # Export the following names
 exportPattern("^sc*")
 exportClasses(SCArrayAssay)
+export(CreateAssayObject)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
+S3method(CreateSeuratObject, DelayedMatrix)
 S3method(NormalizeData, SC_GDSMatrix)
 S3method(ScaleData, SC_GDSMatrix)
 S3method(FindVariableFeatures, SC_GDSMatrix)
 S3method(RunPCA, SCArrayAssay)
 S3method(RunPCA, SC_GDSMatrix)
 
+
+# ================
 
 # Import all packages listed as Imports or Depends
 import(methods)
@@ -20,19 +24,21 @@ importFrom(utils, capture.output, packageVersion, txtProgressBar,
     setTxtProgressBar)
 importFrom(stats, loess)
 importFrom(BiocGenerics, counts)
+importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 importFrom(SummarizedExperiment, rowData)
 
-# Import the classes and methods in SeuratObject / Seurat
+# Import the classes and methods in SeuratObject & Seurat
 importClassesFrom(SeuratObject, Assay)
 importFrom(SeuratObject, GetAssayData, SetAssayData, CreateSeuratObject,
-    VariableFeatures, AddMetaData, IsMatrixEmpty, Key,
-    CheckDots, CheckGC, CreateDimReducObject)
+    VariableFeatures, AddMetaData, IsMatrixEmpty, Key, 'Key<-',
+    CheckDots, CheckGC, CheckMatrix,
+    CreateAssayObject, CreateDimReducObject)
 importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
 
-# Import the classes and methods in SCArray
+# Import the classes and methods in DelayedArray & SCArray
+importClassesFrom(DelayedArray, DelayedArray, DelayedMatrix)
+importFrom(DelayedArray, DelayedArray)
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
 importFrom(SCArray, scArray, scExperiment, scObj, scSetMax,
-    colSums, colVars, rowMeans, rowVars, rowSds, scRowMeanVar)
-
-importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
+    colSums, colVars, rowSums, rowMeans, rowVars, rowSds, scRowMeanVar)
 

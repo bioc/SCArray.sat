@@ -33,10 +33,154 @@
     s
 }
 
+# ensure row- and column-names are vectors, not arrays
+.form_mat_names <- function(mat)
+{
+    if (!is.vector(rownames(mat)))
+        rownames(mat) <- as.vector(rownames(mat))
+    if (!is.vector(colnames(mat)))
+        colnames(mat) <- as.vector(colnames(mat))
+    mat
+}
+
+# check row- and column- names
+.check_mat <- function(m)
+{
+    # check that dimnames of input counts are unique
+    if (anyDuplicated(rownames(m)))
+    {
+        warning(
+            "Non-unique features (rownames) present in the input matrix, making unique",
+            call.=FALSE, immediate.=TRUE)
+        rownames(m) <- make.unique(rownames(m))
+    }
+    if (anyDuplicated(colnames(m)))
+    {
+        warning(
+            "Non-unique cell names (colnames) present in the input matrix, making unique",
+            call.=FALSE, immediate.=TRUE)
+        colnames(m) <- make.unique(colnames(m))
+    }
+    if (is.null(colnames(m)))
+    {
+        stop("No cell names (colnames) names present in the input matrix",
+            call.=FALSE)
+    }
+    if (any(rownames(m) == ''))
+    {
+        stop("Feature names of counts matrix cannot be empty",
+            call.=FALSE)
+    }
+    if (nrow(m) > 0L && is.null(rownames(m)))
+    {
+        stop("No feature names (rownames) names present in the input matrix",
+            call.=FALSE)
+    }
+    # output
+    m
+}
+
+
 
 #######################################################################
-# Methods for SCArrayAssay
 
+# Create an SCArrayAssay object from counts or data
+CreateAssayObject <- function(counts, data, min.cells=0, min.features=0,
+    check.matrix=FALSE, ...)
+{
+    if (missing(counts) && missing(data))
+    {
+        stop("Must provide either 'counts' or 'data'")
+    } else if (!missing(counts) && !missing(data))
+    {
+        stop("Either 'counts' or 'data' must be missing; both cannot be provided")
+    } else if (!missing(counts))
+    {
+        # if not DelayedArray
+        # should call SeuratObject::CreateAssayObject() instead
+        if (!is(counts, "DelayedArray"))
+        {
+            return(SeuratObject::CreateAssayObject(counts,
+                min.cells = min.cells, min.features = min.features,
+                check.matrix = check.matrix, ...))
+        }
+        # check counts
+        x_check(counts, "Calling SCArray.sat::CreateAssayObject() with %s ...")
+        counts <- .check_mat(counts)
+        if (isTRUE(check.matrix)) CheckMatrix(counts)
+        # filter based on min.features
+        if (min.features > 0)
+        {
+            nfeatures <- colSums(counts > 0)
+            counts <- counts[, which(nfeatures >= min.features)]
+        }
+        # filter genes on the number of cells expressing
+        if (min.cells > 0)
+        {
+            num.cells <- rowSums(counts > 0)
+            counts <- counts[which(num.cells >= min.cells), ]
+        }
+        # set data
+        data <- counts <- scObj(counts)
+
+    } else if (!missing(data))
+    {
+        # if not DelayedArray
+        # should call SeuratObject::CreateAssayObject() instead
+        if (!is(data, "DelayedArray"))
+        {
+            return(SeuratObject::CreateAssayObject(data=data,
+                min.cells = min.cells, min.features = min.features,
+                check.matrix = check.matrix, ...))
+        }
+        # check data
+        x_check(data, "Calling SCArray.sat::CreateAssayObject() with %s ...")
+        data <- .check_mat(data)
+        if (min.cells != 0 || min.features != 0)
+        {
+            warning(
+                "No filtering performed if passing to data rather than counts",
+                call.=FALSE, immediate.=TRUE)
+        }
+        # set data
+        data <- scObj(data)
+        counts <- scObj(DelayedArray(new('matrix')))
+    }
+
+    # Ensure row- and column-names
+    counts <- .form_mat_names(counts)
+    data <- .form_mat_names(data)
+    if (any(grepl('_', rownames(counts))) || any(grepl('_', rownames(data))))
+    {
+        warning(
+            "Feature names cannot have underscores ('_'), replacing with dashes ('-')",
+            call.=FALSE, immediate.=TRUE)
+        rownames(counts) <- gsub('_', '-', rownames(counts))
+        rownames(data) <- gsub('_', '-', rownames(data))
+    }
+    if (any(grepl('|', rownames(counts), fixed=TRUE)) || any(grepl('|', rownames(data), fixed=TRUE)))
+    {
+        warning(
+            "Feature names cannot have pipe characters ('|'), replacing with dashes ('-')",
+            call.=FALSE, immediate.=TRUE)
+        rownames(counts) <- gsub('|', '-', rownames(counts), fixed=TRUE)
+        rownames(data) <- gsub('|', '-', rownames(data), fixed=TRUE)
+    }
+  
+    # output
+    new(Class = "SCArrayAssay",
+        counts2 = counts, data2 = data, scale.data2 = NULL,
+        meta.features = data.frame(row.names = rownames(data)),
+        misc = list())
+}
+
+
+
+#######################################################################
+# S3/S4 Methods for SCArrayAssay
+
+# S3 method for GetAssayData()
+# Get data matrix from a SCArrayAssay object
 GetAssayData.SCArrayAssay <- function(object,
     slot=c("data", "scale.data", "counts"), ...)
 {
@@ -46,6 +190,8 @@ GetAssayData.SCArrayAssay <- function(object,
 }
 
 
+# S3 method for SetAssayData()
+# Set data matrix from a SCArrayAssay object
 SetAssayData.SCArrayAssay <- function(object,
     slot=c('data', 'scale.data', 'counts'), new.data, ...)
 {
@@ -104,6 +250,39 @@ SetAssayData.SCArrayAssay <- function(object,
     # set
     slot(object, .redirect_slot(slot)) <- new.data
     return(object)
+}
+
+
+# S3 method for CreateSeuratObject()
+# Create a Seurat Object from a DelayedMatrix
+CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
+    assay='RNA', names.field=1, names.delim='_', meta.data=NULL, min.cells=0,
+    min.features=0, row.names=NULL, ...)
+{
+    # check
+    x_check(counts, "Calling CreateSeuratObject.DelayedMatrix() with %s ...")
+    if (!is.null(meta.data))
+    {
+        if (!all(rownames(meta.data) %in% colnames(counts)))
+        {
+            warning("Some cells in meta.data not present in provided counts matrix",
+                immediate.=TRUE)
+        }
+    }
+    # new SCArrayAssay
+    assay.data <- CreateAssayObject(counts,
+        min.cells=min.cells, min.features=min.features, row.names=row.names)
+    # meta data & key
+    if (!is.null(meta.data))
+    {
+        common.cells <- intersect(rownames(meta.data), colnames(assay.data))
+        meta.data <- meta.data[common.cells, , drop = FALSE]
+    }
+    Key(assay.data) <- suppressWarnings(Seurat:::UpdateKey(tolower(assay)))
+    # output
+    CreateSeuratObject(assay.data, project, assay,
+        names.field=names.field, names.delim=names.delim,
+        meta.data=meta.data, ...)
 }
 
 
