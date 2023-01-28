@@ -2,8 +2,11 @@
 exportPattern("^sc*")
 exportClasses(SCArrayAssay)
 export(CreateAssayObject2)
+
+S3method(subset, SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
+
 S3method(CreateSeuratObject, DelayedMatrix)
 S3method(NormalizeData, SC_GDSMatrix)
 S3method(ScaleData, SC_GDSMatrix)
@@ -30,9 +33,9 @@ importFrom(SummarizedExperiment, rowData)
 # Import the classes and methods in SeuratObject & Seurat
 importClassesFrom(SeuratObject, Assay)
 importFrom(SeuratObject, GetAssayData, SetAssayData, CreateSeuratObject,
-    VariableFeatures, AddMetaData, IsMatrixEmpty, Key, 'Key<-',
-    CheckDots, CheckGC, CheckMatrix,
-    CreateAssayObject, CreateDimReducObject)
+    AddMetaData, IsMatrixEmpty, Key, 'Key<-',
+    VariableFeatures, 'VariableFeatures<-',
+    CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateDimReducObject)
 importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
 
 # Import the classes and methods in DelayedArray & SCArray
