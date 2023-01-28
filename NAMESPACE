@@ -1,7 +1,7 @@
 # Export the following names
 exportPattern("^sc*")
 exportClasses(SCArrayAssay)
-export(CreateAssayObject)
+export(CreateAssayObject2)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
 S3method(CreateSeuratObject, DelayedMatrix)

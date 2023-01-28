@@ -85,7 +85,7 @@
 #######################################################################
 
 # Create an SCArrayAssay object from counts or data
-CreateAssayObject <- function(counts, data, min.cells=0, min.features=0,
+CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
     check.matrix=FALSE, ...)
 {
     if (missing(counts) && missing(data))
@@ -100,12 +100,12 @@ CreateAssayObject <- function(counts, data, min.cells=0, min.features=0,
         # should call SeuratObject::CreateAssayObject() instead
         if (!is(counts, "DelayedArray"))
         {
-            return(SeuratObject::CreateAssayObject(counts,
+            return(CreateAssayObject(counts,
                 min.cells = min.cells, min.features = min.features,
                 check.matrix = check.matrix, ...))
         }
         # check counts
-        x_check(counts, "Calling SCArray.sat::CreateAssayObject() with %s ...")
+        x_check(counts, "Calling CreateAssayObject2() with %s ...")
         counts <- .check_mat(counts)
         if (isTRUE(check.matrix)) CheckMatrix(counts)
         # filter based on min.features
@@ -129,12 +129,12 @@ CreateAssayObject <- function(counts, data, min.cells=0, min.features=0,
         # should call SeuratObject::CreateAssayObject() instead
         if (!is(data, "DelayedArray"))
         {
-            return(SeuratObject::CreateAssayObject(data=data,
+            return(CreateAssayObject(data=data,
                 min.cells = min.cells, min.features = min.features,
                 check.matrix = check.matrix, ...))
         }
         # check data
-        x_check(data, "Calling SCArray.sat::CreateAssayObject() with %s ...")
+        x_check(data, "Calling CreateAssayObject2() with %s ...")
         data <- .check_mat(data)
         if (min.cells != 0 || min.features != 0)
         {
@@ -270,7 +270,7 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
         }
     }
     # new SCArrayAssay
-    assay.data <- CreateAssayObject(counts,
+    assay.data <- CreateAssayObject2(counts,
         min.cells=min.cells, min.features=min.features, row.names=row.names)
     # meta data & key
     if (!is.null(meta.data))
