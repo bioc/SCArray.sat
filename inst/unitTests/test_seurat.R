@@ -1,7 +1,7 @@
 suppressPackageStartupMessages({
     library(RUnit)
-    library(SCArray.sat)
     library(Seurat)
+    library(SCArray.sat)
 })
 
 
@@ -12,9 +12,9 @@ test_sce_matrix <- function()
 
 	# load Assay
 	x <- scGetAssayGDS(fn)
-	d1 <- Seurat::CreateSeuratObject(x, assay="rna_")
+	d1 <- Seurat::CreateSeuratObject(x)  # DelayedMatrix-based Assay
 	m <- as(GetAssayData(d1, "counts"), "sparseMatrix")
-	d0 <- Seurat::CreateSeuratObject(m, assay="rna_")
+	d0 <- Seurat::CreateSeuratObject(m)  # in-memory Assay
 
 	m0 <- GetAssayData(d0, "counts")
 	m1 <- GetAssayData(d1, "counts")
@@ -27,10 +27,13 @@ test_sce_matrix <- function()
 	m1 <- GetAssayData(d1, "data")
 	checkEquals(m0, as(m1, "sparseMatrix"), "normalized counts")
 
-	# scale
+    # feature subsets
 	d1 <- FindVariableFeatures(d1, nfeatures=500)
-	d1 <- ScaleData(d1)
 	d0 <- FindVariableFeatures(d0, nfeatures=500)
+	checkEquals(HVFInfo(d1), HVFInfo(d0), "HVFInfo")
+
+	# scale
+	d1 <- ScaleData(d1)
 	d0 <- ScaleData(d0)
 	m0 <- GetAssayData(d0, "scale.data")
 	m1 <- GetAssayData(d1, "scale.data")
