@@ -4,6 +4,9 @@ suppressPackageStartupMessages({
     library(SCArray.sat)
 })
 
+# Enable debug information in SCArray & SCArray.sat
+options(SCArray.verbose=TRUE)
+
 
 test_sce_matrix <- function()
 {
@@ -27,7 +30,17 @@ test_sce_matrix <- function()
 	m1 <- GetAssayData(d1, "data")
 	checkEquals(m0, as(m1, "sparseMatrix"), "normalized counts")
 
-    # feature subsets
+    # feature subsets, method: mvp
+	d1 <- FindVariableFeatures(d1, nfeatures=500, selection.method="mvp")
+	d0 <- FindVariableFeatures(d0, nfeatures=500, selection.method="mvp")
+	checkEquals(HVFInfo(d1), HVFInfo(d0), "HVFInfo")
+
+    # feature subsets, method: disp
+	d1 <- FindVariableFeatures(d1, nfeatures=500, selection.method="disp")
+	d0 <- FindVariableFeatures(d0, nfeatures=500, selection.method="disp")
+	checkEquals(HVFInfo(d1), HVFInfo(d0), "HVFInfo")
+
+    # feature subsets, default method: vst
 	d1 <- FindVariableFeatures(d1, nfeatures=500)
 	d0 <- FindVariableFeatures(d0, nfeatures=500)
 	checkEquals(HVFInfo(d1), HVFInfo(d0), "HVFInfo")

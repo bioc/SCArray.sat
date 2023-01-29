@@ -459,7 +459,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
 ####  Methods -- FindVariableFeatures()  ####
 
-.row_var_std <- function(x, mu, sd, vmax, verbose)
+.row_var_std <- function(x, mu, sd, vmax, verbose=TRUE)
 {
     # check
     stopifnot(is(x, "SC_GDSMatrix"))
@@ -487,6 +487,35 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     v / (ncol(x) - 1L)
 }
 
+.mean_disp_exp <- function(x, verbose=TRUE)
+{
+    # check
+    stopifnot(is(x, "SC_GDSMatrix"))
+    # initialize
+    if (verbose)
+        pb <- txtProgressBar(min=0L, max=ncol(x), style=3L, file=stderr())
+    # block read
+    v <- blockReduce(function(bk, v, mu, inv, vmax, vb)
+    {
+        bk <- expm1(bk)
+        if (vb)
+            setTxtProgressBar(pb, start(currentViewport())[2L])
+        v + c(rowSums(bk), rowSums(bk * bk))
+    }, x, double(nrow(x)*2L), grid=colAutoGrid(x), vb=verbose)
+    # finally
+    if (verbose)
+    {
+        setTxtProgressBar(pb, ncol(x))
+        close(pb)
+    }
+    # output
+    v <- matrix(v, nrow(x), ncol=2L)
+    s1 <- v[,1L]; s2 <- v[,2L]
+    m <- s1 / ncol(x)
+    vr <- (s2 - s1*s1/ncol(x)) / (ncol(x) - 1L)
+    cbind(log1p(m), log(vr/m))
+}
+
 FindVariableFeatures.SC_GDSMatrix <- function(object,
     selection.method="vst", loess.span=0.3, clip.max="auto",
     mean.function=NULL, dispersion.function=NULL, num.bin=20,
@@ -496,10 +525,19 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
     x_msg("Calling FindVariableFeatures.SC_GDSMatrix() ...")
     CheckDots(...)
 
-    if (is.null(mean.function))
-        mean.function <- Seurat:::FastExpMean
-    if (is.null(dispersion.function))
-        dispersion.function <- Seurat:::FastLogVMR
+    # check mean & dispersion functions
+    if (!is.null(mean.function))
+    {
+        if (!identical(mean.function, Seurat:::FastExpMean) &&
+            !identical(mean.function, Seurat::ExpMean))
+            stop("User-defined 'mean.function' is not supported.")
+    }
+    if (!is.null(dispersion.function))
+    {
+        if (!identical(dispersion.function, Seurat:::FastLogVMR) &&
+            !identical(dispersion.function, Seurat::LogVMR))
+            stop("User-defined 'dispersion.function' is not supported.")
+    }
 
     if (selection.method == "vst")
     {
@@ -523,14 +561,37 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         hvf.info$variance.standardized <- .row_var_std(
             object, hvf.info$mean, sqrt(hvf.info$variance.expected),
             clip.max, verbose)
-
-        rownames(hvf.info) <- rownames(object)
         colnames(hvf.info) <- paste0('vst.', colnames(hvf.info))
+
     } else {
-        stop("selection.method != 'vst', not implemented yet.")
+
+        # calculate the mean and dispersion for each feature with
+        #     normalized (log-transformed) data
+        v <- .mean_disp_exp(object, verbose)
+        f_mean <- v[, 1L]
+        f_mean[is.na(f_mean)] <- 0
+        f_dispersion <- v[, 2L]
+        f_dispersion[is.na(f_dispersion)] <- 0
+        names(f_mean) <- names(f_dispersion) <- rownames(object)
+        data.x.breaks <- switch(binning.method,
+            'equal_width' = num.bin,
+            'equal_frequency' = quantile(f_mean[f_mean>0],
+                probs=seq(0, 1, length.out=num.bin)),
+            stop("Unknown binning method: ", binning.method)
+        )
+        data.x.bin <- cut(f_mean, breaks=data.x.breaks, include.lowest=TRUE)
+        names(data.x.bin) <- names(f_mean)
+        mean.y <- tapply(f_dispersion, data.x.bin, FUN=mean)
+        sd.y <- tapply(f_dispersion, data.x.bin, FUN=sd)
+        f_dispersion.scaled <- (f_dispersion - mean.y[as.numeric(data.x.bin)]) /
+            sd.y[as.numeric(data.x.bin)]
+        names(f_dispersion.scaled) <- names(f_mean)
+        hvf.info <- data.frame(f_mean, f_dispersion, f_dispersion.scaled)
+        colnames(hvf.info) <- paste0('mvp.', c('mean', 'dispersion', 'dispersion.scaled'))
     }
 
     # output
+    rownames(hvf.info) <- rownames(object)
     hvf.info
 }
 

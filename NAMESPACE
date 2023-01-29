@@ -32,7 +32,7 @@ importFrom(gdsfmt, add.gdsn, append.gdsn, closefn.gds, createfn.gds,
     openfn.gds)
 importFrom(utils, capture.output, packageVersion, txtProgressBar,
     setTxtProgressBar)
-importFrom(stats, loess)
+importFrom(stats, loess, quantile)
 importFrom(BiocGenerics, counts)
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 importFrom(SummarizedExperiment, rowData)
