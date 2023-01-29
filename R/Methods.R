@@ -674,7 +674,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
 {
     x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
 
-    # BiocSingular SVD functions
+    # BiocSingular SVD functions (Irlba or Exact algorithm)
     pca_func <- if (isTRUE(approx)) runIrlbaSVD else runExactSVD
 
     if (!is.null(seed.use)) set.seed(seed.use)
@@ -687,33 +687,33 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         sdev <- pca_rv$d / sqrt(max(1L, nrow(object)-1L))
         if (weight.by.var)
         {
-            feature.loadings <- pca_rv$u %*% diag(pca_rv$d)
+            f_loadings <- pca_rv$u %*% diag(pca_rv$d)
         } else {
-            feature.loadings <- pca_rv$u
+            f_loadings <- pca_rv$u
         }
-        cell.embeddings <- pca_rv$v
+        c_embeddings <- pca_rv$v
     } else {
         total.variance <- sum(rowVars(object))
         npcs <- min(npcs, nrow(object)-1L)
         pca_rv <- pca_func(t(object), k=npcs, center=FALSE, scale=FALSE,
             deferred=FALSE, fold=1)
-        feature.loadings <- pca_rv$v
+        f_loadings <- pca_rv$v
         sdev <- pca_rv$d / sqrt(max(1L, ncol(object)-1L))
         if (weight.by.var)
         {
-            cell.embeddings <- pca_rv$u %*% diag(pca_rv$d)
+            c_embeddings <- pca_rv$u %*% diag(pca_rv$d)
         } else {
-            cell.embeddings <- pca_rv$u
+            c_embeddings <- pca_rv$u
         }
     }
 
-    rownames(feature.loadings) <- rownames(object)
-    colnames(feature.loadings) <- paste0(reduction.key, 1:npcs)
-    rownames(cell.embeddings) <- colnames(object)
-    colnames(cell.embeddings) <- colnames(feature.loadings)
+    rownames(f_loadings) <- rownames(object)
+    colnames(f_loadings) <- paste0(reduction.key, 1:npcs)
+    rownames(c_embeddings) <- colnames(object)
+    colnames(c_embeddings) <- colnames(f_loadings)
     reduction.data <- CreateDimReducObject(
-        embeddings = cell.embeddings,
-        loadings = feature.loadings,
+        embeddings = c_embeddings,
+        loadings = f_loadings,
         assay = assay,
         stdev = sdev,
         key = reduction.key,
@@ -728,14 +728,4 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     }
     return(reduction.data)
 }
-
-
-
-
-
-
-
-
-# as.Seurat
-
 
