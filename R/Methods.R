@@ -213,7 +213,7 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
 {
     stopifnot(is(x, "DelayedArray"))
     if (verbose)
-        cat("Performing log-normalization\n")
+        message("Performing log-normalization")
     s <- scale.factor / colSums(x)
     log1p(sweep(x, 2L, s, `*`))
 }
@@ -223,15 +223,24 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
     if (margin == 1L)
     {
         if (verbose)
-            cat("Normalizing across features (CLR)\n")
+            message("Normalizing across features (CLR)")
         s <- exp(-rowSums(log1p(x)) / ncol(x))
         log1p(x * s)
     } else {
         if (verbose)
-            cat("Normalizing across cells (CLR)\n")
+            message("Normalizing across cells (CLR)")
         s <- exp(-colSums(log1p(x)) / nrow(x))
         log1p(sweep(x, 2L, s, `*`))
     }
+}
+
+.rc_norm <- function(x, scale.factor=1, verbose=TRUE)
+{
+    stopifnot(is(x, "DelayedArray"))
+    if (verbose)
+        message("Performing relative-counts-normalization")
+    s <- scale.factor / colSums(x)
+    sweep(x, 2L, s, `*`)
 }
 
 
@@ -254,7 +263,7 @@ NormalizeData.SC_GDSMatrix <- function(object,
     switch(normalization.method,
         "LogNormalize" = .log_norm(object, scale.factor, verbose),
         "CLR" = .clr_norm(object, margin, verbose),
-        # "RC"
+        "RC"  = .rc_norm(object, scale.factor, verbose),
         stop("Unknown or not implemented normalization method: ",
             normalization.method)
     )

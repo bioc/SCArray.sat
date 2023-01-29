@@ -17,7 +17,7 @@ test_sce_matrix <- function()
 	x <- scGetAssayGDS(fn)
 	d1 <- Seurat::CreateSeuratObject(x)  # new DelayedMatrix-based Assay
 	m <- as(GetAssayData(d1, "counts"), "sparseMatrix")
-	d0 <- Seurat::CreateSeuratObject(m)  # in-memory regular Assay
+	d0 <- Seurat::CreateSeuratObject(m)  # regular in-memory Assay
 
     # raw counts
 	m0 <- GetAssayData(d0, "counts")
@@ -29,19 +29,26 @@ test_sce_matrix <- function()
 	d0 <- NormalizeData(d0, normalization.method="CLR", margin=1)
 	m0 <- GetAssayData(d0, "data")
 	m1 <- GetAssayData(d1, "data")
-	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with margin=1")
+	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with CLR & margin=1")
 	d1 <- NormalizeData(d1, normalization.method="CLR", margin=2)
 	d0 <- NormalizeData(d0, normalization.method="CLR", margin=2)
 	m0 <- GetAssayData(d0, "data")
 	m1 <- GetAssayData(d1, "data")
-	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with margin=2")
+	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with CLR & margin=2")
+
+	# normalize, method: RC
+	d1 <- NormalizeData(d1, normalization.method="RC")
+	d0 <- NormalizeData(d0, normalization.method="RC")
+	m0 <- GetAssayData(d0, "data")
+	m1 <- GetAssayData(d1, "data")
+	checkEquals(m0, as(m1, "sparseMatrix"), "normalized counts with RC")
 
 	# normalize, method: LogNormalize
 	d1 <- NormalizeData(d1)
 	d0 <- NormalizeData(d0)
 	m0 <- GetAssayData(d0, "data")
 	m1 <- GetAssayData(d1, "data")
-	checkEquals(m0, as(m1, "sparseMatrix"), "normalized counts")
+	checkEquals(m0, as(m1, "sparseMatrix"), "normalized counts with LogNormalize")
 
     # feature subsets, method: mvp
 	d1 <- FindVariableFeatures(d1, nfeatures=500, selection.method="mvp")
