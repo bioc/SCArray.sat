@@ -36,8 +36,35 @@ BiocManager::install("SCArray.sat")
 
 ```R
 suppressPackageStartupMessages({
-    library(SCArray.sat)
     library(Seurat)
+    library(SCArray.sat)
 })
 
+# an input GDS file with raw counts
+fn <- system.file("extdata", "example.gds", package="SCArray")
+
+a <- scGetAssayGDS(fn)
+class(a)          # new "SCArrayAssay"
+is(a, "Assay")    # TRUE
+
+# create a Seurat object with the SCArrayAssay object
+d <- CreateSeuratObject(a)
+
+d <- NormalizeData(d)
+d <- FindVariableFeatures(d, nfeatures=500)
+d <- ScaleData(d)
+
+d <- RunPCA(d)
+DimPlot(d, reduction="pca")
+
+GetAssayData(d, "counts")      # it is a SC_GDSMatrix
+GetAssayData(d, "data")        # it is a SC_GDSMatrix
+GetAssayData(d, "scale.data")  # it is a SC_GDSMatrix
 ```
+
+
+## See Also
+
+* [SCArray](http://www.bioconductor.org/packages/SCArray): Large-scale single-cell RNA-seq data manipulation with GDS files
+* [Seurat](https://cran.r-project.org/package=Seurat): A toolkit for quality control, analysis, and exploration of single cell RNA sequencing data.
+
