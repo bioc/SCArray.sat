@@ -34,13 +34,15 @@ x_msg <- function(msg) SCArray:::x_check(NULL, msg)
 
 #######################################################################
 
-scGetAssayGDS <- function(gdsfn, row_data=TRUE, check=TRUE, verbose=TRUE)
+scGetAssayGDS <- function(gdsfn, key="rna_", row_data=TRUE, check=TRUE,
+    verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfn), length(gdsfn)==1L)
+    stopifnot(is.character(key), length(key)==1L, !is.na(key))
+    stopifnot(is.logical(row_data) || is.data.frame(row_data))
     stopifnot(is.logical(check), length(check)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
-    stopifnot(is.logical(row_data) || is.data.frame(row_data))
     # load gds data
     if (verbose) .cat("Input: ", gdsfn)
     sce <- scExperiment(gdsfn)
@@ -70,9 +72,11 @@ scGetAssayGDS <- function(gdsfn, row_data=TRUE, check=TRUE, verbose=TRUE)
             meta_data <- v
         }
     }
+    # key adjust if needed
+    key <- Seurat:::UpdateKey(key)
     # output
     new(Class = "SCArrayAssay",
-        counts2 = m, data2 = m, scale.data2 = NULL,
+        counts2 = m, data2 = m, scale.data2 = NULL, key = key,
         meta.features = meta_data, misc = list())
 }
 

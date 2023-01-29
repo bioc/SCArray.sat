@@ -221,6 +221,7 @@ NormalizeData.SC_GDSMatrix <- function(object,
     verbose=TRUE, ...)
 {
     # check
+    x_msg("Calling NormalizeData.SC_GDSMatrix() ...")
     CheckDots(...)
     if (!is.null(normalization.method))
     {
@@ -290,6 +291,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     block.size=1000, min.cells.to.block=3000, ...)
 {
     # check
+    x_msg("Calling ScaleData.SC_GDSMatrix() ...")
     CheckDots(...)
     if (is.null(features)) features <- rownames(object)
     features <- intersect(features, rownames(object))
@@ -491,6 +493,7 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
     binning.method="equal_width", verbose=TRUE, ...)
 {
     # check
+    x_msg("Calling FindVariableFeatures.SC_GDSMatrix() ...")
     CheckDots(...)
 
     if (is.null(mean.function))
@@ -526,7 +529,9 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
     } else {
         stop("selection.method != 'vst', not implemented yet.")
     }
-    return(hvf.info)
+
+    # output
+    hvf.info
 }
 
 
@@ -537,6 +542,7 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, ...)
 {
     # check
+    x_msg("Calling RunPCA.SCArrayAssay() ...")
     if (length(VariableFeatures(object))==0L && is.null(features))
     {
         stop("Variable features haven't been set. Run FindVariableFeatures() or provide a vector of feature names.")

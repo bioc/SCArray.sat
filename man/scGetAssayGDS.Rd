@@ -5,10 +5,11 @@
     Gets Seurat Assay object.
 }
 \usage{
-scGetAssayGDS(gdsfn, row_data=TRUE, check=TRUE, verbose=TRUE)
+scGetAssayGDS(gdsfn, key="rna_", row_data=TRUE, check=TRUE, verbose=TRUE)
 }
 \arguments{
     \item{gdsfn}{a file name for the GDS file}
+    \item{key}{characters for the Assay key}
     \item{row_data}{if \code{TRUE}, add \code{rowData()} to the feature-level
         meta data of the Seurat Assay}
     \item{check}{if \code{TRUE}, check the feature names}
@@ -27,9 +28,9 @@ scGetAssayGDS(gdsfn, row_data=TRUE, check=TRUE, verbose=TRUE)
 # raw count data in a GDS file
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-assay <- scGetAssayGDS(fn)
-assay
-class(assay)
+a <- scGetAssayGDS(fn)
+a
+class(a)
 
 rm(assay)
 }
