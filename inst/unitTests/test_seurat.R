@@ -15,15 +15,28 @@ test_sce_matrix <- function()
 
 	# load Assay
 	x <- scGetAssayGDS(fn)
-	d1 <- Seurat::CreateSeuratObject(x)  # DelayedMatrix-based Assay
+	d1 <- Seurat::CreateSeuratObject(x)  # new DelayedMatrix-based Assay
 	m <- as(GetAssayData(d1, "counts"), "sparseMatrix")
-	d0 <- Seurat::CreateSeuratObject(m)  # in-memory Assay
+	d0 <- Seurat::CreateSeuratObject(m)  # in-memory regular Assay
 
+    # raw counts
 	m0 <- GetAssayData(d0, "counts")
 	m1 <- GetAssayData(d1, "counts")
 	checkEquals(m0, as(m1, "sparseMatrix"), "row counts")
 
-	# normalize
+	# normalize, method: CLR (margin = 1 or 2)
+	d1 <- NormalizeData(d1, normalization.method="CLR", margin=1)
+	d0 <- NormalizeData(d0, normalization.method="CLR", margin=1)
+	m0 <- GetAssayData(d0, "data")
+	m1 <- GetAssayData(d1, "data")
+	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with margin=1")
+	d1 <- NormalizeData(d1, normalization.method="CLR", margin=2)
+	d0 <- NormalizeData(d0, normalization.method="CLR", margin=2)
+	m0 <- GetAssayData(d0, "data")
+	m1 <- GetAssayData(d1, "data")
+	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with margin=2")
+
+	# normalize, method: LogNormalize
 	d1 <- NormalizeData(d1)
 	d0 <- NormalizeData(d0)
 	m0 <- GetAssayData(d0, "data")

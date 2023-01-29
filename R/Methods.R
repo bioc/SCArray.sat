@@ -209,15 +209,34 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
 
 ####  Methods -- NormalizeData()  ####
 
-.log_norm <- function(mat, scale.factor=10000, verbose=TRUE)
+.log_norm <- function(x, scale.factor=1e4, verbose=TRUE)
 {
-    stopifnot(is(mat, "DelayedArray"))
-    s <- scale.factor / colSums(mat)
-    m <- log1p(sweep(mat, 2L, s, `*`))
+    stopifnot(is(x, "DelayedArray"))
+    if (verbose)
+        cat("Performing log-normalization\n")
+    s <- scale.factor / colSums(x)
+    log1p(sweep(x, 2L, s, `*`))
 }
 
+.clr_norm <- function(x, margin, verbose)
+{
+    if (margin == 1L)
+    {
+        if (verbose)
+            cat("Normalizing across features (CLR)\n")
+        s <- exp(-rowSums(log1p(x)) / ncol(x))
+        log1p(x * s)
+    } else {
+        if (verbose)
+            cat("Normalizing across cells (CLR)\n")
+        s <- exp(-colSums(log1p(x)) / nrow(x))
+        log1p(sweep(x, 2L, s, `*`))
+    }
+}
+
+
 NormalizeData.SC_GDSMatrix <- function(object,
-    normalization.method="LogNormalize", scale.factor=10000, margin=1,
+    normalization.method="LogNormalize", scale.factor=1e4, margin=1,
     verbose=TRUE, ...)
 {
     # check
@@ -228,13 +247,14 @@ NormalizeData.SC_GDSMatrix <- function(object,
         stopifnot(is.character(normalization.method),
             length(normalization.method)==1L)
     }
-    stopifnot(margin==1)
+    stopifnot(margin %in% c(1, 2))
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.null(normalization.method)) return(object)
 
     switch(normalization.method,
         "LogNormalize" = .log_norm(object, scale.factor, verbose),
-        # "CLR", "RC"
+        "CLR" = .clr_norm(object, margin, verbose),
+        # "RC"
         stop("Unknown or not implemented normalization method: ",
             normalization.method)
     )
