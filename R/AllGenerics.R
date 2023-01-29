@@ -64,14 +64,14 @@ subset.SCArrayAssay <- function(x, cells=NULL, features=NULL, ...)
     s <- GetAssayData(x, "scale.data")
     if (!is.null(s))
     {
-        cells.scaled <- colnames(s)
-        cells.scaled <- cells.scaled[cells.scaled %in% cells]
-        cells.scaled <- cells.scaled[na.omit(match(colnames(x), cells.scaled))]
-        features.scaled <- rownames(s)
-        features.scaled <- features.scaled[features.scaled %in% features]
-        if (length(cells.scaled) && length(features.scaled))
+        c_scaled <- colnames(s)
+        c_scaled <- c_scaled[c_scaled %in% cells]
+        c_scaled <- c_scaled[na.omit(match(colnames(x), c_scaled))]
+        f_scaled <- rownames(s)
+        f_scaled <- f_scaled[f_scaled %in% features]
+        if (length(c_scaled) && length(f_scaled))
         {
-            x@scale.data2 <- s[features.scaled, cells.scaled, drop=FALSE]
+            x@scale.data2 <- s[f_scaled, c_scaled, drop=FALSE]
         } else {
             x@scale.data2 <- NULL
         }
