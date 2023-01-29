@@ -213,7 +213,7 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
 {
     stopifnot(is(x, "DelayedArray"))
     if (verbose)
-        message("Performing log-normalization")
+        .cat("Performing log-normalization")
     s <- scale.factor / colSums(x)
     log1p(sweep(x, 2L, s, `*`))
 }
@@ -223,12 +223,12 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
     if (margin == 1L)
     {
         if (verbose)
-            message("Normalizing across features (CLR)")
+            .cat("Normalizing across features (CLR)")
         s <- exp(-rowSums(log1p(x)) / ncol(x))
         log1p(x * s)
     } else {
         if (verbose)
-            message("Normalizing across cells (CLR)")
+            .cat("Normalizing across cells (CLR)")
         s <- exp(-colSums(log1p(x)) / nrow(x))
         log1p(sweep(x, 2L, s, `*`))
     }
@@ -238,7 +238,7 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
 {
     stopifnot(is(x, "DelayedArray"))
     if (verbose)
-        message("Performing relative-counts-normalization")
+        .cat("Performing relative-counts-normalization")
     s <- scale.factor / colSums(x)
     sweep(x, 2L, s, `*`)
 }
@@ -383,7 +383,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
             toupper(substr(msg, 1L, 1L)), substring(msg, 2L),
             ' data matrix (', class(object)[1L],
             ' [', paste(dim(object), collapse=','), '])')
-        message(msg)
+        .cat(msg)
     }
 
     # output variable
@@ -391,7 +391,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     if (is.character(use_gds) && length(split.cells)>1L)
     {
         # use DelayedMatrix
-        if (verbose) message("Writing to ", sQuote(use_gds))
+        if (verbose) .cat("Writing to ", sQuote(use_gds))
         if (file.exists(use_gds))
         {
             outf <- openfn.gds(use_gds, readonly=FALSE)
@@ -417,7 +417,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         {
             if (length(split.cells)>1L && (do.scale || do.center))
             {
-                message("Data split (", class(m)[1L], " [",
+                .cat("Data split (", class(m)[1L], " [",
                     paste(dim(m), collapse=","), "]): ", x)
             }
         }
@@ -724,7 +724,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         msg <- capture.output(print(
             x=reduction.data, dims=ndims.print, nfeatures=nfeatures.print
         ))
-        message(paste(msg, collapse='\n'))
+        .cat(paste(msg, collapse='\n'))
     }
     return(reduction.data)
 }
