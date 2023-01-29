@@ -1,5 +1,6 @@
 \name{SCArray.sat-package}
 \alias{SCArray.sat-package}
+\alias{SCArray.sat}
 \docType{package}
 \title{Large-scale single-cell RNA-seq data analysis using GDS files and Seurat}
 \description{

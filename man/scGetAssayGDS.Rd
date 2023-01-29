@@ -32,7 +32,7 @@ a <- scGetAssayGDS(fn)
 a
 class(a)
 
-rm(assay)
+rm(a)
 }
 
 \keyword{GDS}
