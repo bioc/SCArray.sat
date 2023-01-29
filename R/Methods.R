@@ -267,24 +267,6 @@ x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
     scSetMax(x, scale.max)    # set a bound
 }
 
-x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
-{
-    stopifnot(is(mat, "DelayedMatrix"))
-    stopifnot(is(gdsn, "gdsn.class"))
-    if (verbose)
-        pb <- txtProgressBar(min=0, max=ncol(mat), style=3L, file=stderr())
-    # block write
-    blockReduce(function(bk, i, gdsn)
-    {
-        append.gdsn(gdsn, bk)
-        if (verbose) setTxtProgressBar(pb, i+ncol(bk))
-        i + ncol(bk)
-    }, mat, init=0L, grid=colAutoGrid(mat), gdsn=gdsn)
-    # finally
-    if (verbose) close(pb)
-    invisible()
-}
-
 ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, use_gds=TRUE, verbose=TRUE,
@@ -495,7 +477,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     if (verbose)
         pb <- txtProgressBar(min=0L, max=ncol(x), style=3L, file=stderr())
     # block read
-    v <- blockReduce(function(bk, v, mu, inv, vmax, vb)
+    v <- blockReduce(function(bk, v, vb)
     {
         bk <- expm1(bk)
         if (vb)
@@ -546,22 +528,22 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         if (verbose)
             cat("Calculating gene variances\n")
         v <- scRowMeanVar(object)
-        hvf.info <- data.frame(mean=v[,1L], variance=v[,2L])
-        hvf.info$variance[is.na(hvf.info$variance)] <- 0
-        hvf.info$variance.expected <- 0
-        hvf.info$variance.standardized <- 0
-        not.const <- hvf.info$variance > 0
+        hvf <- data.frame(mean=v[,1L], variance=v[,2L])
+        hvf$variance[is.na(hvf$variance)] <- 0
+        hvf$variance.expected <- 0
+        hvf$variance.standardized <- 0
+        not.const <- hvf$variance > 0
         fit <- loess(log10(variance) ~ log10(mean),
-            hvf.info[not.const, ], span=loess.span)
-        hvf.info$variance.expected[not.const] <- 10 ^ fit$fitted
+            hvf[not.const, ], span=loess.span)
+        hvf$variance.expected[not.const] <- 10 ^ fit$fitted
 
         # get variance after feature standardization
         if (verbose)
             cat("Calculating feature variances of standardized and clipped values\n")
-        hvf.info$variance.standardized <- .row_var_std(
-            object, hvf.info$mean, sqrt(hvf.info$variance.expected),
+        hvf$variance.standardized <- .row_var_std(
+            object, hvf$mean, sqrt(hvf$variance.expected),
             clip.max, verbose)
-        colnames(hvf.info) <- paste0('vst.', colnames(hvf.info))
+        colnames(hvf) <- paste0('vst.', colnames(hvf))
 
     } else {
 
@@ -586,13 +568,13 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         f_dispersion.scaled <- (f_dispersion - mean.y[as.numeric(data.x.bin)]) /
             sd.y[as.numeric(data.x.bin)]
         names(f_dispersion.scaled) <- names(f_mean)
-        hvf.info <- data.frame(f_mean, f_dispersion, f_dispersion.scaled)
-        colnames(hvf.info) <- paste0('mvp.', c('mean', 'dispersion', 'dispersion.scaled'))
+        hvf <- data.frame(f_mean, f_dispersion, f_dispersion.scaled)
+        colnames(hvf) <- paste0('mvp.', c('mean', 'dispersion', 'dispersion.scaled'))
     }
 
     # output
-    rownames(hvf.info) <- rownames(object)
-    hvf.info
+    rownames(hvf) <- rownames(object)
+    hvf
 }
 
 

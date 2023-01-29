@@ -24,11 +24,30 @@
 
 .pretty <- function(x) prettyNum(x, big.mark=",", scientific=FALSE)
 
-# if getOption("SCArray.verbose")=TRUE, show message
+# if getOption("SCArray.verbose")=TRUE, show message for debugging
 x_check <- function(x, msg) SCArray:::x_check(x, msg)
 
-# if getOption("SCArray.verbose")=TRUE, show message
+# if getOption("SCArray.verbose")=TRUE, show message for debugging
 x_msg <- function(msg) SCArray:::x_check(NULL, msg)
+
+# write a matrix to a GDS node
+x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
+{
+    stopifnot(is(mat, "DelayedMatrix"))
+    stopifnot(is(gdsn, "gdsn.class"))
+    if (verbose)
+        pb <- txtProgressBar(min=0, max=ncol(mat), style=3L, file=stderr())
+    # block write
+    blockReduce(function(bk, i, gdsn)
+    {
+        append.gdsn(gdsn, bk)
+        if (verbose) setTxtProgressBar(pb, i+ncol(bk))
+        i + ncol(bk)
+    }, mat, init=0L, grid=colAutoGrid(mat), gdsn=gdsn)
+    # finally
+    if (verbose) close(pb)
+    invisible()
+}
 
 
 
