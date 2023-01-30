@@ -22,12 +22,17 @@ options(width=110)
 
 The SCArray.sat package extends the Seurat classes and functions to support [GDS files](http://www.bioconductor.org/packages/gdsfmt) as a DelayedArray backend for data representation. It introduces a new `SCArrayAssay` class (derived from the Seurat `Assay`), which wraps raw counts, normalized expressions and scaled data matrix based on DelayedMatrix. It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide common data analysis, with the optimized algorithms for GDS data files.
 
-![**Figure 1**: Workflow of SCArray.sat](scarray_sat.svg)
+
+~
+
+![**Figure 1**: Overview of the SCArray.sat package](scarray_sat.svg)
+
+~
 
 
 The SeuratObject package defines the `Assay` class with three members/slots `counts`, `data` and `scale.data` storing raw counts, normalized expressions and scaled data matrix respectively. However, `counts` and `data` should be either a dense matrix or a sparse matrix defined in the [Matrix](https://cran.r-project.org/package=Matrix) package. The scalability of the sparse matrix is limited by the number of non-zero values (should be < 2^31), since the Matrix package uses 32-bit integers as indices internally. `scale.data` in the `Assay` class is defined as a dense matrix, so it is also limited by the available memory. The new class `SCArrayAssay` is derived from `Assay`, with three additional slots `counts2`, `data2` and `scale.data2` replacing the old ones. These new slots can be DelayedMatrix wrapping an on-disk data matrix, without loading the data in memory.
 
-The SCArray.sat package takes advantage of the S3 object-oriented methods defined in the SeuratObject and Seurat packages to reduce code redundancy, by implementing the functions specific to the classes `SCArrayAssay` and `SC_GDSMatrix` (GDS-specific DelayedMatrix). Table 1 shows a list of key S3 methods for data analysis. For example, the function `NormalizeData.SC_GDSMatrix()` will be called when a `SC_GDSMatrix` object is passed to the S3 generic `NormalizeData()`, while `NormalizeData.Assay()` and `NormalizeData.Seurat()` are unchanged.
+The SCArray.sat package takes advantage of the S3 object-oriented methods defined in the SeuratObject and Seurat packages to reduce code redundancy, by implementing the functions specific to the classes `SCArrayAssay` and `SC_GDSMatrix` (GDS-specific DelayedMatrix). Table 1 shows a list of key S3 methods for data analysis. For example, the function `NormalizeData.SC_GDSMatrix()` will be called when a `SC_GDSMatrix` object is passed to the S3 generic `NormalizeData()`, while `NormalizeData.Assay()` and `NormalizeData.Seurat()` are unchanged. In addition, the SCArray and SCArray.sat packages implement the optimized algorithms for the calculations, by reducing the on-disk data access and taking the GDS data structure into account.
 
 ~
 
