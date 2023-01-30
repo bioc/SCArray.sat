@@ -48,7 +48,7 @@ subset.SCArrayAssay <- function(x, cells=NULL, features=NULL, ...)
         warning("NAs passed in the features vector, removing NAs", immediate.=TRUE)
         features <- na.omit(features)
     }
-    if (all(sapply(list(features, cells), FUN=length) == dim(x)))
+    if (all(vapply(list(features, cells), FUN=length, TRUE) == dim(x)))
         return(x)
     if (is.numeric(features)) features <- rownames(x)[features]
     features <- gsub(paste0('^', Key(x)), '', features)

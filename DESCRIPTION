@@ -5,13 +5,13 @@ Title: Large-scale single-cell RNA-seq data analysis using GDS files and
 Version: 0.99.0
 Date: 2023-01-21
 Depends: methods, SCArray (>= 1.7.5), SeuratObject (>= 4.0), Seurat (>= 4.0)
-Imports: S4Vectors, utils, BiocGenerics, gdsfmt, DelayedArray, BiocSingular,
-        SummarizedExperiment
+Imports: S4Vectors, utils, stats, BiocGenerics, gdsfmt, DelayedArray,
+        BiocSingular, SummarizedExperiment
 Suggests: RUnit, knitr, markdown, rmarkdown
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"),
         email="xiuwen.zheng@abbvie.com", comment=c(ORCID="0000-0002-1390-0708")),
         person("Seurat contributors", role="ctb",
-        comment="for the data structure and methods defined in Seurat"))
+        comment="for the classes and methods defined in Seurat"))
 Description: Extends the Seurat classes and functions to support GDS files as
         a DelayedArray backend for data representation. It introduces a new
         SCArrayAssay class (derived from the Seurat Assay), which wraps raw
@@ -23,4 +23,4 @@ License: GPL-3
 VignetteBuilder: knitr
 ByteCompile: TRUE
 URL: https://github.com/AbbVie-ComputationalGenomics/SCArray.sat
-biocViews: Infrastructure, DataRepresentation, DataImport, SingleCell, RNASeq
+biocViews: DataRepresentation, DataImport, SingleCell, RNASeq

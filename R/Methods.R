@@ -176,7 +176,7 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
 # S3 method for CreateSeuratObject()
 # Create a Seurat Object from a DelayedMatrix
 CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
-    assay='RNA', names.field=1, names.delim='_', meta.data=NULL, min.cells=0,
+    assay='rna_', names.field=1, names.delim='_', meta.data=NULL, min.cells=0,
     min.features=0, row.names=NULL, ...)
 {
     # check
@@ -198,7 +198,7 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
         common.cells <- intersect(rownames(meta.data), colnames(assay.data))
         meta.data <- meta.data[common.cells, , drop = FALSE]
     }
-    Key(assay.data) <- suppressWarnings(Seurat:::UpdateKey(tolower(assay)))
+    Key(assay.data) <- Seurat:::UpdateKey(tolower(assay))
     # output
     CreateSeuratObject(assay.data, project, assay,
         names.field=names.field, names.delim=names.delim,
@@ -554,7 +554,7 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         if (clip.max == "auto")
             clip.max <- sqrt(ncol(object))
         if (verbose)
-            cat("Calculating gene variances\n")
+            .cat("Calculating gene variances")
         v <- scRowMeanVar(object)
         hvf <- data.frame(mean=v[,1L], variance=v[,2L])
         hvf$variance[is.na(hvf$variance)] <- 0
@@ -567,7 +567,7 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
 
         # get variance after feature standardization
         if (verbose)
-            cat("Calculating feature variances of standardized and clipped values\n")
+            .cat("Calculating feature variances of standardized and clipped values")
         hvf$variance.standardized <- .row_var_std(
             object, hvf$mean, sqrt(hvf$variance.expected),
             clip.max, verbose)
@@ -609,7 +609,7 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
 ####  Methods -- RunPCA()  ####
 
 RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
-    rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
+    rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
     nfeatures.print=30, reduction.key="PC_", seed.use=42, ...)
 {
     # check
@@ -668,7 +668,7 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
 }
 
 RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
-    weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5, nfeatures.print=30,
+    weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5), nfeatures.print=30,
     reduction.key="PC_", seed.use=42, approx=TRUE, ...)
 {
     x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
@@ -676,7 +676,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     # BiocSingular SVD functions (Irlba or Exact algorithm)
     pca_func <- if (isTRUE(approx)) runIrlbaSVD else runExactSVD
 
-    if (!is.null(seed.use)) set.seed(seed.use)
+    # if (!is.null(seed.use)) set.seed(seed.use)
     if (rev.pca)
     {
         total.variance <- sum(colVars(object))
@@ -707,7 +707,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     }
 
     rownames(f_loadings) <- rownames(object)
-    colnames(f_loadings) <- paste0(reduction.key, 1:npcs)
+    colnames(f_loadings) <- paste0(reduction.key, seq_len(npcs))
     rownames(c_embeddings) <- colnames(object)
     colnames(c_embeddings) <- colnames(f_loadings)
     reduction.data <- CreateDimReducObject(
