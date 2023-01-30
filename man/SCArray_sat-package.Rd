@@ -7,9 +7,9 @@
     The package extends the Seurat classes and functions to support GDS files
 as a DelayedArray backend for data representation. It provides the SCArrayAssay
 class (inherited from the Seurat Assay) to wrap the DelayedMatrix-based raw
-counts, normalized expression values and scaled data matrix. It is designed to
-integrate seamlessly with the SeuratObject and Seurat packages to provide the
-downstream data analysis, with the optimized algorithms for GDS data files.
+counts, normalized expressions and scaled data matrix. It is designed to
+integrate seamlessly with the SeuratObject and Seurat packages to provide
+common data analysis, with the optimized algorithms for GDS data files.
 }
 \details{
     \tabular{ll}{
