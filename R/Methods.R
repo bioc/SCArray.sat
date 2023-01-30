@@ -327,7 +327,6 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
     if (!is.null(vars.to.regress))
     {
-        stop("Not implemented yet.")
         if (is.null(latent.data))
         {
             latent.data <- data.frame(row.names=colnames(object))
@@ -360,7 +359,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         {
             if (verbose && length(split.cells) > 1L)
                 message("Regressing out variables from split ", x)
-            RegressOutMatrix(
+            Seurat:::RegressOutMatrix(
                 data.expr = object[, split.cells[[x]], drop = FALSE],
                 latent.data = latent.data[split.cells[[x]], , drop = FALSE],
                 features.regress = features,
