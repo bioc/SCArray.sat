@@ -30,7 +30,7 @@ The SCArray.sat package extends the [Seurat](https://cran.r-project.org/package=
 ~
 
 
-The SeuratObject package defines the `Assay` class with three members/slots `counts`, `data` and `scale.data` storing raw counts, normalized expressions and scaled data matrix respectively. However, `counts` and `data` should be either a dense matrix or a sparse matrix defined in the [Matrix](https://cran.r-project.org/package=Matrix) package. The scalability of the sparse matrix is limited by the number of non-zero values (should be < 2^31), since the Matrix package uses 32-bit integers as indices internally. `scale.data` in the `Assay` class is defined as a dense matrix, so it is also limited by the available memory. The new class `SCArrayAssay` is derived from `Assay`, with three additional slots `counts2`, `data2` and `scale.data2` replacing the old ones. These new slots can be DelayedMatrix wrapping an on-disk data matrix, without loading the data in memory.
+The SeuratObject package defines the `Assay` class with three members/slots `counts`, `data` and `scale.data` storing raw counts, normalized expressions and scaled data matrix respectively. However, `counts` and `data` should be either a dense matrix or a sparse matrix defined in the [Matrix](https://cran.r-project.org/package=Matrix) package. The scalability of the sparse matrix is limited by the number of non-zero values (should be < 2^31), since the Matrix package uses 32-bit indices internally. `scale.data` in the `Assay` class is defined as a dense matrix, so it is also limited by the available memory. The new class `SCArrayAssay` is derived from `Assay`, with three additional slots `counts2`, `data2` and `scale.data2` replacing the old ones. These new slots can be DelayedMatrix wrapping an on-disk data matrix, without loading the data in memory.
 
 The SCArray.sat package takes advantage of the S3 object-oriented methods defined in the SeuratObject and Seurat packages to reduce code redundancy, by implementing the functions specific to the classes `SCArrayAssay` and `SC_GDSMatrix` (GDS-specific DelayedMatrix). Table 1 shows a list of key S3 methods for data analysis. For example, the function `NormalizeData.SC_GDSMatrix()` will be called when a `SC_GDSMatrix` object is passed to the S3 generic `NormalizeData()`, while `NormalizeData.Assay()` and `NormalizeData.Seurat()` are unchanged. In addition, the SCArray and SCArray.sat packages implement the optimized algorithms for the calculations, by reducing the on-disk data access and taking the GDS data structure into account.
 
@@ -75,8 +75,10 @@ d <- CreateSeuratObject(a)
 d <- NormalizeData(d)
 d <- FindVariableFeatures(d, nfeatures=500)
 d <- ScaleData(d)
+```
 
-# let's check the internal data matrices
+Let's check the internal data matrices,
+```{r}
 GetAssayData(d, "counts")      # raw counts
 GetAssayData(d, "data")        # normalized expression
 GetAssayData(d, "scale.data")  # scaled data matrix
@@ -136,7 +138,7 @@ After the file conversion, users can use this GDS file with Seurat to analyze th
 
 ~
 
-### 2. Test R Codes
+### 2. R Codes in the Benchmark
 
 The following R script is used in the benchmark for testing GDS files, and the R codes for testing the Seurat Object are similar except the input file.
 ```R

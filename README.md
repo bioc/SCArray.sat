@@ -9,8 +9,10 @@ Large-scale single-cell RNA-seq data analysis using GDS files and Seurat
 
 The package extends the [Seurat](https://cran.r-project.org/web/packages/Seurat/index.html) classes and functions to support GDS files as a DelayedArray backend for data representation. It introduces a new `SCArrayAssay` class (derived from the Seurat `Assay`), which wraps raw counts, normalized expressions and scaled data matrix based on DelayedMatrix. It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide common data analysis, with the optimized algorithms for GDS data files.
 
+![**Figure 1**: Overview of the SCArray framework.](vignettes/scarray_sat.svg)
 
-## Bioconductor:
+
+## Bioconductor
 
 v0.99.0
 
