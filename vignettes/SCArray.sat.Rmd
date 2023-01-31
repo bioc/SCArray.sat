@@ -20,7 +20,7 @@ options(width=110)
 
 ## Introduction
 
-The SCArray.sat package extends the [Seurat](https://cran.r-project.org/package=Seurat) classes and functions to support [GDS files](http://www.bioconductor.org/packages/gdsfmt) as a DelayedArray backend for data representation. It introduces a new `SCArrayAssay` class (derived from the Seurat `Assay`), which wraps raw counts, normalized expressions and scaled data matrix based on [DelayedMatrix](http://www.bioconductor.org/packages/DelayedArray). It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide common data analysis, with the optimized algorithms for GDS data files.
+Seurat is one of the most popular R packages for quality control, analysis, and exploration of single cell RNA sequencing data. However, its scalability is limited by the available memory. The SCArray.sat package extends the [Seurat](https://cran.r-project.org/package=Seurat) classes and functions to support [GDS files](http://www.bioconductor.org/packages/gdsfmt) as a DelayedArray backend for data representation. It introduces a new `SCArrayAssay` class (derived from the Seurat `Assay`), which wraps raw counts, normalized expressions and scaled data matrix based on [DelayedMatrix](http://www.bioconductor.org/packages/DelayedArray). It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide common data analysis, with the optimized algorithms for GDS data files.
 
 
 ~
@@ -77,13 +77,14 @@ d <- FindVariableFeatures(d, nfeatures=500)
 d <- ScaleData(d)
 ```
 
-Let's check the internal data matrices,
+**Let's check the internal data matrices,**
 ```{r}
 GetAssayData(d, "counts")      # raw counts
 GetAssayData(d, "data")        # normalized expression
 GetAssayData(d, "scale.data")  # scaled data matrix
 ```
 
+**Perform PCA and UMAP:**
 ```{r fig.align="center",fig.width=5,fig.height=3}
 d <- RunPCA(d, ndims.print=1)
 DimPlot(d, reduction="pca")
