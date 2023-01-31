@@ -44,6 +44,7 @@ suppressPackageStartupMessages({
 
 # an input GDS file with raw counts
 fn <- system.file("extdata", "example.gds", package="SCArray")
+fn
 
 a <- scGetAssayGDS(fn)
 class(a)          # new "SCArrayAssay"
@@ -59,9 +60,11 @@ d <- ScaleData(d)
 d <- RunPCA(d)
 DimPlot(d, reduction="pca")
 
-GetAssayData(d, "counts")      # it is a SC_GDSMatrix
-GetAssayData(d, "data")        # it is a SC_GDSMatrix
-GetAssayData(d, "scale.data")  # it is a SC_GDSMatrix
+# check the internal data matrices
+GetAssayData(d, "counts")        # SC_GDSMatrix
+path(GetAssayData(d, "counts"))  # the file name of count data
+GetAssayData(d, "data")          # SC_GDSMatrix
+GetAssayData(d, "scale.data")    # SC_GDSMatrix
 ```
 
 
