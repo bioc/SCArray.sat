@@ -36,7 +36,7 @@ x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
     stopifnot(is(mat, "DelayedMatrix"))
     stopifnot(is(gdsn, "gdsn.class"))
     if (verbose)
-        pb <- txtProgressBar(min=0, max=ncol(mat), style=3L, file=stderr())
+        pb <- txtProgressBar(min=0L, max=ncol(mat), style=3L, file=stderr())
     # block write
     blockReduce(function(bk, i, gdsn)
     {

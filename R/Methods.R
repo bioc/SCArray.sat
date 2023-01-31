@@ -721,7 +721,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     if (verbose)
     {
         msg <- capture.output(print(
-            x=reduction.data, dims=ndims.print, nfeatures=nfeatures.print
+            reduction.data, dims=ndims.print, nfeatures=nfeatures.print
         ))
         .cat(paste(msg, collapse='\n'))
     }
