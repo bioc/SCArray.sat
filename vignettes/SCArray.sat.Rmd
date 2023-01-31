@@ -67,7 +67,7 @@ fn <- system.file("extdata", "example.gds", package="SCArray")
 
 # Create a SCArrayAssay object from the GDS file
 a <- scGetAssayGDS(fn)
-class(a)        # new "SCArrayAssay", derived from Seurat Assay
+class(a)    # new "SCArrayAssay", derived from Seurat Assay
 
 # Create a Seurat object with the SCArrayAssay object
 d <- CreateSeuratObject(a)
@@ -79,14 +79,19 @@ d <- ScaleData(d)
 
 **Let's check the internal data matrices,**
 ```{r}
-GetAssayData(d, "counts")      # raw counts
-GetAssayData(d, "data")        # normalized expression
-GetAssayData(d, "scale.data")  # scaled data matrix
+# raw counts
+GetAssayData(d, "counts")
+# the GDS file storing raw count data
+path(GetAssayData(d, "counts"))
+# normalized expression
+GetAssayData(d, "data")
+# scaled and centered data matrix
+GetAssayData(d, "scale.data")
 ```
 
 **Perform PCA and UMAP:**
 ```{r fig.align="center",fig.width=5,fig.height=3}
-d <- RunPCA(d, ndims.print=1)
+d <- RunPCA(d, ndims.print=1:2)
 DimPlot(d, reduction="pca")
 
 d <- RunUMAP(d, dims=1:50)    # use all PCs calculated by RunPCA()
@@ -98,8 +103,10 @@ DimPlot(d, reduction="umap")
 ### 2. Large Datasets
 
 Let's download a large single-cell RNA-seq dataset from Bioconductor, and convert it to a GDS file. This step will take a while.
+
 If the `TENxBrainData` package is not installed, run:
 ```R
+# install a Bioconductor package
 BiocManager::install("TENxBrainData")
 ```
 
