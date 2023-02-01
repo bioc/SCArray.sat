@@ -5,10 +5,12 @@
     Gets Seurat Assay object.
 }
 \usage{
-scGetAssayGDS(gdsfn, key="rna_", row_data=TRUE, check=TRUE, verbose=TRUE)
+scGetAssayGDS(gdsfn, name="counts", key="rna_", row_data=TRUE, check=TRUE,
+    verbose=TRUE)
 }
 \arguments{
     \item{gdsfn}{a file name for the GDS file}
+    \item{name}{characters for the name of data matrix in the GDS file}
     \item{key}{characters for the Assay key}
     \item{row_data}{if \code{TRUE}, add \code{rowData()} to the feature-level
         meta data of the Seurat Assay}

@@ -53,11 +53,12 @@ x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
 
 #######################################################################
 
-scGetAssayGDS <- function(gdsfn, key="rna_", row_data=TRUE, check=TRUE,
-    verbose=TRUE)
+scGetAssayGDS <- function(gdsfn, name="counts", key="rna_", row_data=TRUE,
+    check=TRUE, verbose=TRUE)
 {
     # check
     stopifnot(is.character(gdsfn), length(gdsfn)==1L)
+    stopifnot(is.character(name), length(name)==1L)
     stopifnot(is.character(key), length(key)==1L, !is.na(key))
     stopifnot(is.logical(row_data) || is.data.frame(row_data))
     stopifnot(is.logical(check), length(check)==1L)
@@ -65,9 +66,13 @@ scGetAssayGDS <- function(gdsfn, key="rna_", row_data=TRUE, check=TRUE,
     # load gds data
     if (verbose) .cat("Input: ", gdsfn)
     sce <- scExperiment(gdsfn)
-    m <- counts(sce)
+    lst <- assays(sce)
+    if (length(lst) == 0L) stop("No assay.")
+    if (is.na(name)) name <- names(lst)[1L]
+    m <- lst[[name]]
+    if (is.null(m)) stop("No '", name, "' assay!")
     if (verbose)
-        .cat("    counts: ", NROW(m), " x ", NCOL(m))
+        .cat("    ", name, ": ", nrow(m), " x ", ncol(m))
     # check feature IDs
     s <- rownames(m)
     if (isTRUE(check) && any(grepl('_', s)))
