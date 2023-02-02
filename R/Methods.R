@@ -428,7 +428,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         out_nd <- NULL
         if (is.character(use_gds))
         {
-            resid_gdsfn <- paste0("_residuals", use_gds)
+            resid_gdsfn <- paste0("_temp", use_gds)
             if (verbose)
                 .cat("Writing to ", sQuote(resid_gdsfn))
             if (file.exists(use_gds))
@@ -578,6 +578,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         scaled.data <- scaled.data[, i]
     }
     dimnames(scaled.data) <- object.names
+    CheckGC()
     return(scaled.data)
 }
 
