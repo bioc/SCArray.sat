@@ -32,7 +32,7 @@ importFrom(gdsfmt, add.gdsn, append.gdsn, closefn.gds, createfn.gds,
     openfn.gds)
 importFrom(utils, capture.output, packageVersion, txtProgressBar,
     setTxtProgressBar)
-importFrom(stats, loess, quantile)
+importFrom(stats, loess, quantile, as.formula, glm, lm, residuals)
 importFrom(BiocGenerics, counts)
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 importFrom(SummarizedExperiment, assays, rowData)
@@ -48,8 +48,10 @@ importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
 
 # Import the classes and methods in DelayedArray & SCArray
 importClassesFrom(DelayedArray, DelayedArray, DelayedMatrix)
-importFrom(DelayedArray, DelayedArray)
+importFrom(DelayedArray,
+    DelayedArray, blockApply, currentBlockId, rowAutoGrid, colAutoGrid)
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
-importFrom(SCArray, scArray, scExperiment, scObj, scSetMax,
-    colSums, colVars, rowSums, rowMeans, rowVars, rowSds, scRowMeanVar)
+importFrom(SCArray,
+    scArray, scExperiment, scObj, scSetMax, scRowMeanVar,
+    colSums, colVars, rowSums, rowMeans, rowVars, rowSds, rowMins)
 

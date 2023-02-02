@@ -318,7 +318,6 @@ x_regress_out <- function(x, latent.data=NULL, out_nd=NULL,
     gd <- rowAutoGrid(x)
     if (verbose)
         pb <- txtProgressBar(0L, length(gd), style=3L, width=64L, file=stderr())
-
     lst <- blockApply(x, function(bk)
     {
         if (is(bk, "SparseArraySeed"))
@@ -350,7 +349,10 @@ x_regress_out <- function(x, latent.data=NULL, out_nd=NULL,
     }, grid=gd, as.sparse=NA, BPPARAM=NULL)
     if (verbose) close(pb)
     # output
-    if (!is.null(out_nd)) ans <- colnames(x)
+    if (!is.null(out_nd))
+        ans <- colnames(x)
+    else
+        ans <- do.call(rbind, ans)
     ans
 }
 
@@ -592,22 +594,18 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     # initialize
     inv <- 1 / sd
     inv[!is.finite(inv)] <- 0
+    gd <- colAutoGrid(x)
     if (verbose)
-        pb <- txtProgressBar(0L, ncol(x), style=3L, width=64L, file=stderr())
+        pb <- txtProgressBar(0L, length(gd), style=3L, width=64L, file=stderr())
     # block read
     v <- blockReduce(function(bk, v, mu, inv, vmax, vb)
     {
         b <- pmin((bk - mu)*inv, vmax)^2L
-        if (vb)
-            setTxtProgressBar(pb, start(currentViewport())[2L])
+        if (vb) setTxtProgressBar(pb, currentBlockId())
         v + rowSums(b)
-    }, x, 0, grid=colAutoGrid(x), mu=mu, inv=inv, vmax=vmax, vb=verbose)
+    }, x, 0, grid=gd, mu=mu, inv=inv, vmax=vmax, vb=verbose)
     # finally
-    if (verbose)
-    {
-        setTxtProgressBar(pb, ncol(x))
-        close(pb)
-    }
+    if (verbose) close(pb)
     # output
     v[!is.finite(v)] <- 0
     v / (ncol(x) - 1L)
@@ -618,22 +616,18 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     # check
     stopifnot(is(x, "SC_GDSMatrix"))
     # initialize
+    gd <- colAutoGrid(x)
     if (verbose)
-        pb <- txtProgressBar(0L, ncol(x), style=3L, width=64L, file=stderr())
+        pb <- txtProgressBar(0L, length(gd), style=3L, width=64L, file=stderr())
     # block read
     v <- blockReduce(function(bk, v, vb)
     {
         bk <- expm1(bk)
-        if (vb)
-            setTxtProgressBar(pb, start(currentViewport())[2L])
+        if (vb) setTxtProgressBar(pb, currentBlockId())
         v + c(rowSums(bk), rowSums(bk * bk))
-    }, x, double(nrow(x)*2L), grid=colAutoGrid(x), vb=verbose)
+    }, x, double(nrow(x)*2L), grid=gd, vb=verbose)
     # finally
-    if (verbose)
-    {
-        setTxtProgressBar(pb, ncol(x))
-        close(pb)
-    }
+    if (verbose) close(pb)
     # output
     v <- matrix(v, nrow(x), ncol=2L)
     s1 <- v[,1L]; s2 <- v[,2L]
