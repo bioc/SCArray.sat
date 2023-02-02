@@ -79,13 +79,20 @@ d <- ScaleData(d)
 
 **Let's check the internal data matrices,**
 ```{r}
+# get the file name for the on-disk object
+scGetFiles(d)
+
 # raw counts
-GetAssayData(d, "counts")
-# the GDS file storing raw count data
-path(GetAssayData(d, "counts"))
+m <- GetAssayData(d, "counts")
+scGetFiles(m)    # the file name storing raw count data
+m
+
 # normalized expression
+# the normalized data does not save in neither the file nor the memory
 GetAssayData(d, "data")
+
 # scaled and centered data matrix
+# in this case, the scaled data does not save in neither the file nor the memory
 GetAssayData(d, "scale.data")
 ```
 
