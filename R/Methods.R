@@ -428,19 +428,22 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         out_nd <- NULL
         if (is.character(use_gds))
         {
+            resid_gdsfn <- paste0("_residuals", use_gds)
             if (verbose)
-                .cat("Writing to ", sQuote(use_gds))
+                .cat("Writing to ", sQuote(resid_gdsfn))
             if (file.exists(use_gds))
             {
-                warning("Overwriting the file '", use_gds, "'",
+                warning("Overwriting the file '", resid_gdsfn, "'",
                     call.=FALSE, immediate.=TRUE)
             }
-            outf <- createfn.gds(use_gds)
+            outf <- createfn.gds(resid_gdsfn)
             on.exit(closefn.gds(outf))  # in case fail
             # a new GDS node storing matrix
             out_nd <- add.gdsn(outf, "residuals", storage="double",
                 valdim=c(ncol(object), 0L), replace=TRUE)
         }
+        if (verbose)
+            message("Regressing maybe faster with a larger block size via setAutoBlockSize()")
 
         # run regression
         lst <- lapply(names(split.cells), FUN=function(x)
@@ -467,10 +470,10 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         if (!identical(gds_colnm, colnames(object)))
         {
             i <- match(colnames(object), gds_colnm)
-            object <- scArray(use_gds, "residuals")
+            object <- scArray(resid_gdsfn, "residuals")
             object <- object[, i]
         } else {
-            object <- t(scArray(use_gds, "residuals"))
+            object <- t(scArray(resid_gdsfn, "residuals"))
         }
 
         use.umi <- ifelse(model.use!="linear", TRUE, use.umi)
@@ -510,10 +513,8 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 warning("Overwriting the file '", use_gds, "'",
                     call.=FALSE, immediate.=TRUE)
             }
-            outf <- createfn.gds(use_gds)
-        } else {
-            outf <- openfn.gds(use_gds, readonly=FALSE)
         }
+        outf <- createfn.gds(use_gds)
         on.exit(closefn.gds(outf))  # in case fail
         # a new GDS node storing matrix
         out_nd <- add.gdsn(outf, "scale.data", storage="double",
