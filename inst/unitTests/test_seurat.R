@@ -65,6 +65,16 @@ test_sce_matrix <- function()
 	d0 <- FindVariableFeatures(d0, nfeatures=500)
 	checkEquals(HVFInfo(d1), HVFInfo(d0), "HVFInfo")
 
+	# scale with regressing out
+	set.seed(100)
+	dd <- data.frame(x1=rnorm(ncol(m1)), x2=rnorm(ncol(m1)),
+		row.names=colnames(m1))
+	a1 <- ScaleData(GetAssay(d1), vars.to.regress=c("x1", "x2"), latent.data=dd)
+	a0 <- ScaleData(GetAssay(d0), vars.to.regress=c("x1", "x2"), latent.data=dd)
+	m0 <- GetAssayData(a0, "scale.data")
+	m1 <- GetAssayData(a1, "scale.data")
+	checkEquals(m0, as.matrix(m1), "scaled data with regressing out the variables")
+
 	# scale
 	d1 <- ScaleData(d1)
 	d0 <- ScaleData(d0)
@@ -84,4 +94,9 @@ test_sce_matrix <- function()
 		else
 			checkEquals(m0[,i], m1[,i], paste("PC", i))
 	}
+
+	# finally
+	rm(list=ls())
+	gc(FALSE)
+	unlink(dir(pattern="^(_temp)?_scale.*\\.gds$"), force=TRUE)
 }
