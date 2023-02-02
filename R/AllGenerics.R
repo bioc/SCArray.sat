@@ -158,28 +158,78 @@ SetAssayData.SCArrayAssay <- function(object,
 }
 
 
+####  scGetFiles()  ####
+
+.scget_sc_assay <- function(object, ...)
+{
+    s <- character()
+    if (is(object@counts2, "SC_GDSMatrix"))
+        s <- scGetFiles(object@counts2)
+    if (is(object@data2, "SC_GDSMatrix"))
+           s <- c(s, scGetFiles(object@data2))
+    if (is(object@scale.data2, "SC_GDSMatrix"))
+        s <- c(s, scGetFiles(object@scale.data2))
+    unique(s)
+}
+
+.scget_seurat <- function(object, ...)
+{
+    s <- lapply(Assays(object), function(nm) scGetFiles(object[[nm]]))
+    unique(unlist(s))
+}
+
 # Get file names for on-disk backend
 setMethod("scGetFiles", "Assay", function(object, ...) NULL)
+setMethod("scGetFiles", "SCArrayAssay", .scget_sc_assay)
+setMethod("scGetFiles", "Seurat", .scget_seurat)
 
-# Get file names for on-disk backend
-setMethod("scGetFiles", "SCArrayAssay", function(object, ...)
-    {
-        s <- character()
-        if (is(object@counts2, "SC_GDSMatrix"))
-            s <- scGetFiles(object@counts2)
-        if (is(object@data2, "SC_GDSMatrix"))
-            s <- c(s, scGetFiles(object@data2))
-        if (is(object@scale.data2, "SC_GDSMatrix"))
-            s <- c(s, scGetFiles(object@scale.data2))
-        unique(s)
-    })
 
-# Get file names for on-disk backend
-setMethod("scGetFiles", "Seurat", function(object, ...)
+####  scMemory()  ####
+
+.scmemory_sc_assay <- function(x, slot=NULL, ...)
+{
+    x_msg("Calling scMemory.SCArrayAssay() ...")
+    if (is.null(slot))
     {
-        s <- lapply(Assays(object), function(nm) scGetFiles(object[[nm]]))
-        unique(unlist(s))
-    })
+        # return Assay instead of SCArrayAssay
+        counts <- scMemory(x@counts2, ...)
+        data <- scMemory(x@data2, ...)
+        scale.data <- scMemory(x@scale.data2, ...)
+        if (is.null(scale.data)) scale.data <- new("matrix")
+        new("Assay",
+            counts = counts, data = data, scale.data = scale.data,
+            key = x@key, assay.orig = x@assay.orig,
+            var.features = x@var.features,
+            meta.features = x@meta.features,
+            misc = x@misc)
+    } else {
+        stopifnot(is.character(slot))
+        nm <- c("counts", "data", "scale.data")
+        s <- setdiff(slot, nm)
+        if (length(s))
+            stop("'slot' should be ", paste(nm, collapse=", "), ".")
+        for (s in slot)
+        {
+            s <- .redirect_slot(s)
+            slot(x, s) <- scMemory(slot(x, s), ...)
+        }
+        x
+    }
+}
+
+.scmemory_seurat <- function(x, assay=NULL, slot=NULL, ...)
+{
+    if (is.null(assay)) assay <- Assays(x)
+    stopifnot(is.character(assay))
+    for (nm in assay)
+        x[[nm]] <- scMemory(x[[nm]], slot=slot, ...)
+    x
+}
+
+# Load data to memory for SCArrayAssay
+setMethod("scMemory", "SCArrayAssay", .scmemory_sc_assay)
+# Load data to memory for Seurat
+setMethod("scMemory", "Seurat", .scmemory_seurat)
 
 
 #######################################################################
