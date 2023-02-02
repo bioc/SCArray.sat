@@ -259,7 +259,7 @@ NormalizeData.SC_GDSMatrix <- function(object,
     stopifnot(margin %in% c(1, 2))
     stopifnot(is.logical(verbose), length(verbose)==1L)
     if (is.null(normalization.method)) return(object)
-
+    # output
     switch(normalization.method,
         "LogNormalize" = .log_norm(object, scale.factor, verbose),
         "CLR" = .clr_norm(object, margin, verbose),
@@ -276,9 +276,9 @@ x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
 {
     if (center && scale)
     {
-        v <- scRowMeanVar(x, na.rm=TRUE)
-        m <- v[,1L]
-        rsd <- 1 / sqrt(v[,2L])
+        v <- scRowMeanVar(x, na.rm=TRUE)  # calculate mean and var together
+        m <- v[,1L]              # mean
+        rsd <- 1 / sqrt(v[,2L])  # var
         rsd[!is.finite(rsd)] <- 0
         x <- (x - m) * rsd
     } else {
@@ -293,8 +293,67 @@ x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
             x <- x * rsd
         }
     }
-    scSetMax(x, scale.max)    # set a bound
+    # set a bound and output
+    scSetMax(x, scale.max)
 }
+
+x_regress_out <- function(x, latent.data=NULL, out_nd=NULL, 
+    model.use=c("linear", "poisson", "negbinom"), verbose=TRUE)
+{
+    # check
+    model.use <- match.arg(model.use)
+    if (is.null(latent.data)) return(x)
+    if (nrow(latent.data) != ncol(x))
+        stop("Uneven number of cells between latent data and expression data.")
+    # initialize
+    vars.to.regress <- colnames(latent.data)
+    fm <- as.formula(paste("GENE ~", paste(vars.to.regress, collapse="+")))
+    if (model.use == "linear")
+    {
+        mat <- cbind(latent.data, x[1L, ])
+        colnames(mat) <- c(colnames(latent.data), "GENE")
+        qr <- lm(fm, mat, qr=TRUE)$qr
+    }
+
+    gd <- rowAutoGrid(x)
+    if (verbose)
+        pb <- txtProgressBar(0L, length(gd), style=3L, width=64L, file=stderr())
+
+    lst <- blockApply(x, function(bk)
+    {
+        if (is(bk, "SparseArraySeed"))
+            bk <- as(bk, "sparseMatrix")
+        ans <- NULL
+        if (is.null(out_nd))
+            ans <- matrix(0, nrow=nrow(bk), ncol=ncol(bk))
+        for (i in seq_len(nrow(bk)))
+        {
+            xx <- bk[i, ]
+            mat <- cbind(latent.data, xx)
+            colnames(mat) <- c(vars.to.regress, "GENE")
+            res <- switch(model.use,
+                linear = qr.resid(qr, xx),
+                poisson = residuals(glm(fm, "poisson", mat), type="pearson"),
+                negbinom = Seurat:::NBResiduals(fm, mat, rownames(x)[i])
+            )
+            # set
+            if (is.null(out_nd))
+            {
+                ans[i, ] <- res
+            } else {
+                append.gdsn(out_nd, res)
+            }
+        }
+        if (verbose)
+            setTxtProgressBar(pb, currentBlockId())
+        ans
+    }, grid=gd, as.sparse=NA, BPPARAM=NULL)
+    if (verbose) close(pb)
+    # output
+    if (!is.null(out_nd)) ans <- colnames(x)
+    ans
+}
+
 
 ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
@@ -304,9 +363,13 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     # check
     x_check(object, "Calling ScaleData.SC_GDSMatrix() with %s ...")
     CheckDots(...)
-    if (is.null(features)) features <- rownames(object)
-    features <- intersect(features, rownames(object))
-    object <- object[features, , drop=FALSE]
+    if (!is.null(features))
+    {
+        features <- intersect(features, rownames(object))
+        object <- object[features, , drop=FALSE]
+    } else {
+        features <- rownames(object)
+    }
     object.names <- dimnames(object)
     if (is.null(split.by)) split.by <- TRUE
     split.cells <- split(colnames(object), split.by)
@@ -330,6 +393,8 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
     if (!is.null(vars.to.regress))
     {
+        if (verbose)
+            .cat("Regressing out: ", paste(vars.to.regress, collapse=", "))
         if (is.null(latent.data))
         {
             latent.data <- data.frame(row.names=colnames(object))
@@ -339,7 +404,10 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         }
         if (any(vars.to.regress %in% rownames(object)))
         {
-            x <- object[intersect(vars.to.regress, rownames(object)), , drop=FALSE]
+            s <- intersect(vars.to.regress, rownames(object))
+            if (verbose)
+                .cat("Loading the matrix for ", paste(s, collapse=", "))
+            x <- object[s, , drop=FALSE]
             latent.data <- cbind(latent.data, as.matrix(t(x)))
             remove(x)
         }
@@ -355,23 +423,62 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 call.=FALSE, immediate.=TRUE)
             vars.to.regress <- colnames(latent.data)
         }
-        if (verbose)
-            message("Regressing out ", paste(vars.to.regress, collapse=', '))
 
-        object <- lapply(names(split.cells), FUN=function(x)
+        # use DelayedMatrix ?
+        out_nd <- NULL
+        if (is.character(use_gds))
+        {
+            if (verbose)
+                .cat("Writing to ", sQuote(use_gds))
+            if (file.exists(use_gds))
+            {
+                warning("Overwriting the file '", use_gds, "'",
+                    call.=FALSE, immediate.=TRUE)
+            }
+            outf <- createfn.gds(use_gds)
+            on.exit(closefn.gds(outf))  # in case fail
+            # a new GDS node storing matrix
+            out_nd <- add.gdsn(outf, "residuals", storage="double",
+                valdim=c(ncol(object), 0L), replace=TRUE)
+        }
+
+        # run regression
+        lst <- lapply(names(split.cells), FUN=function(x)
         {
             if (verbose && length(split.cells) > 1L)
-                message("Regressing out variables from split ", x)
-            Seurat:::RegressOutMatrix(
-                data.expr = object[, split.cells[[x]], drop = FALSE],
-                latent.data = latent.data[split.cells[[x]], , drop = FALSE],
-                features.regress = features,
-                model.use = model.use,
-                use.umi = use.umi,
-                verbose = verbose
-            )
+                .cat("Regressing out variables from split ", x)
+            x_regress_out(
+                object[, split.cells[[x]], drop = FALSE],
+                latent.data[split.cells[[x]], , drop = FALSE],
+                out_nd, model.use, verbose)
         })
-        object <- do.call(cbind, object)
+
+        # finally
+        if (is.null(out_nd))
+        {
+            # in-memory matrix
+            object <- do.call(cbind, object)
+            gds_colnm <- colnames(object)
+        } else {
+            on.exit()
+            closefn.gds(outf)  # close the GDS file
+            gds_colnm <- unlist(lst)
+        }
+        if (!identical(gds_colnm, colnames(object)))
+        {
+            i <- match(colnames(object), gds_colnm)
+            object <- scArray(use_gds, "residuals")
+            object <- object[, i]
+        } else {
+            object <- t(scArray(use_gds, "residuals"))
+        }
+
+        use.umi <- ifelse(model.use!="linear", TRUE, use.umi)
+        if (use.umi)
+        {
+            object <- log1p(object - rowMins(object, na.rm=TRUE))
+        }
+
         dimnames(object) <- object.names
         CheckGC()
     }
@@ -389,18 +496,24 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     }
 
     # output variable
-    outf <- NULL
-    if (is.character(use_gds) && length(split.cells)>1L)
+    out_nd <- NULL
+    if (is.character(use_gds) &&
+        (length(split.cells) > 1L) || !is.null(vars.to.regress))
     {
         # use DelayedMatrix
         if (verbose)
             .cat("Writing to ", sQuote(use_gds))
-        if (file.exists(use_gds))
+        if (is.null(vars.to.regress))
         {
-            warning("Overwriting the file '", use_gds, "'",
-                call.=FALSE, immediate.=TRUE)
+            if (file.exists(use_gds))
+            {
+                warning("Overwriting the file '", use_gds, "'",
+                    call.=FALSE, immediate.=TRUE)
+            }
+            outf <- createfn.gds(use_gds)
+        } else {
+            outf <- openfn.gds(use_gds, readonly=FALSE)
         }
-        outf <- createfn.gds(use_gds)
         on.exit(closefn.gds(outf))  # in case fail
         # a new GDS node storing matrix
         out_nd <- add.gdsn(outf, "scale.data", storage="double",
@@ -428,7 +541,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         # center & scale, return a DelayedMatrix
         m <- x_row_scale(m, do.center, do.scale, scale.max)
         # save
-        if (!is.null(outf))
+        if (!is.null(out_nd))
         {
             x_append_gdsn(m, out_nd, verbose)
             split.cells[[x]]  # output colnames
@@ -442,32 +555,28 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     })
 
     # output
-    if (!is.null(outf))
+    if (!is.null(out_nd))
     {
         on.exit()
-        closefn.gds(outf)  # close the file first
+        closefn.gds(outf)  # close the GDS file
         scaled.data <- scArray(use_gds, "scale.data")
         gds_colnm <- unlist(lst)
-        if (!identical(gds_colnm, colnames(object)))
-        {
-            i <- match(colnames(object), gds_colnm)
-            scaled.data <- scaled.data[, i]
-        }
-        dimnames(scaled.data) <- object.names
     } else if (is.character(use_gds))
     {
         # length(split.cells) == 1, and a single DelayedMatrix
         scaled.data <- lst[[1L]]
+        gds_colnm <- colnames(scaled.data)
     } else {
         # in-memory
         scaled.data <- do.call(cbind, lst)
         gds_colnm <- colnames(scaled.data)
-        if (!identical(gds_colnm, colnames(object)))
-        {
-            i <- match(colnames(object), gds_colnm)
-            scaled.data <- scaled.data[, i]
-        }
     }
+    if (!identical(gds_colnm, colnames(object)))
+    {
+        i <- match(colnames(object), gds_colnm)
+        scaled.data <- scaled.data[, i]
+    }
+    dimnames(scaled.data) <- object.names
     return(scaled.data)
 }
 
@@ -482,7 +591,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     inv <- 1 / sd
     inv[!is.finite(inv)] <- 0
     if (verbose)
-        pb <- txtProgressBar(min=0L, max=ncol(x), style=3L, file=stderr())
+        pb <- txtProgressBar(0L, ncol(x), style=3L, width=64L, file=stderr())
     # block read
     v <- blockReduce(function(bk, v, mu, inv, vmax, vb)
     {
@@ -508,7 +617,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     stopifnot(is(x, "SC_GDSMatrix"))
     # initialize
     if (verbose)
-        pb <- txtProgressBar(min=0L, max=ncol(x), style=3L, file=stderr())
+        pb <- txtProgressBar(0L, ncol(x), style=3L, width=64L, file=stderr())
     # block read
     v <- blockReduce(function(bk, v, vb)
     {
