@@ -158,6 +158,30 @@ SetAssayData.SCArrayAssay <- function(object,
 }
 
 
+# Get file names for on-disk backend
+setMethod("scGetFiles", "Assay", function(object, ...) NULL)
+
+# Get file names for on-disk backend
+setMethod("scGetFiles", "SCArrayAssay", function(object, ...)
+    {
+        s <- character()
+        if (is(object@counts2, "SC_GDSMatrix"))
+            s <- scGetFiles(object@counts2)
+        if (is(object@data2, "SC_GDSMatrix"))
+            s <- c(s, scGetFiles(object@data2))
+        if (is(object@scale.data2, "SC_GDSMatrix"))
+            s <- c(s, scGetFiles(object@scale.data2))
+        unique(s)
+    })
+
+# Get file names for on-disk backend
+setMethod("scGetFiles", "Seurat", function(object, ...)
+    {
+        s <- lapply(Assays(object), function(nm) scGetFiles(object[[nm]]))
+        unique(unlist(s))
+    })
+
+
 #######################################################################
 # S3 Methods for DelayedMatrix
 

@@ -4,6 +4,7 @@
 exportPattern("^sc*")
 exportClasses(SCArrayAssay)
 export(CreateAssayObject2)
+exportMethods(scGetFiles)
 
 # methods for SCArrayAssay
 S3method(subset, SCArrayAssay)
@@ -41,7 +42,7 @@ importFrom(SummarizedExperiment, assays, rowData)
 importClassesFrom(SeuratObject, Assay)
 importFrom(SeuratObject,
     GetAssayData, SetAssayData, CreateSeuratObject,
-    AddMetaData, IsMatrixEmpty, Key, 'Key<-', as.sparse,
+    Assays, AddMetaData, IsMatrixEmpty, Key, 'Key<-', as.sparse,
     VariableFeatures, 'VariableFeatures<-',
     CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateDimReducObject)
 importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
@@ -52,6 +53,6 @@ importFrom(DelayedArray,
     DelayedArray, blockApply, currentBlockId, rowAutoGrid, colAutoGrid)
 importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
 importFrom(SCArray,
-    scArray, scExperiment, scObj, scSetMax, scRowMeanVar,
+    scArray, scExperiment, scObj, scSetMax, scRowMeanVar, scGetFiles,
     colSums, colVars, rowSums, rowMeans, rowVars, rowSds, rowMins)
 
