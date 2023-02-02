@@ -1,7 +1,7 @@
 \name{scMemory}
 \alias{scMemory}
-\alias{scMemory,DelayedArray-method}
-\alias{scMemory,SummarizedExperiment-method}
+\alias{scMemory,SCArrayAssay-method}
+\alias{scMemory,Seurat-method}
 
 \title{Load Data to Memory}
 \description{
@@ -31,6 +31,9 @@ a \code{Assay} object.
 }
 
 \author{Xiuwen Zheng}
+\seealso{
+    \code{\link[SCArray]{scMemory}}
+}
 
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
