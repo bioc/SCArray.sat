@@ -143,21 +143,21 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
     # Ensure row- and column-names
     counts <- .form_mat_names(counts)
     data <- .form_mat_names(data)
-    if (any(grepl('_', rownames(counts))) || any(grepl('_', rownames(data))))
+    if (any(grepl('_', c(rownames(counts), rownames(data)), fixed=TRUE)))
     {
         warning("Feature names cannot have underscores ('_'), ",
             "replacing with dashes ('-')", call.=FALSE, immediate.=TRUE)
-        rownames(counts) <- gsub('_', '-', rownames(counts))
-        rownames(data) <- gsub('_', '-', rownames(data))
+        rownames(counts) <- gsub('_', '-', rownames(counts), fixed=TRUE)
+        rownames(data) <- gsub('_', '-', rownames(data), fixed=TRUE)
     }
-    if (any(grepl('|', rownames(counts), fixed=TRUE)) || any(grepl('|', rownames(data), fixed=TRUE)))
+    if (any(grepl('|', c(rownames(counts), rownames(data)), fixed=TRUE)))
     {
         warning("Feature names cannot have pipe characters ('|'), ",
             "replacing with dashes ('-')", call.=FALSE, immediate.=TRUE)
         rownames(counts) <- gsub('|', '-', rownames(counts), fixed=TRUE)
         rownames(data) <- gsub('|', '-', rownames(data), fixed=TRUE)
     }
-  
+
     # output
     new(Class = "SCArrayAssay",
         counts2 = counts, data2 = data, scale.data2 = NULL,

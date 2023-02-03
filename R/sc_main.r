@@ -85,10 +85,8 @@ scGetAssayGDS <- function(gdsfn, name="counts", key="rna_", row_data=TRUE,
     s <- rownames(m)
     if (isTRUE(check) && any(grepl('_', s)))
     {
-        warning(
-            "Feature names cannot have underscores ('_'), replacing with dashes ('-')",
-            immediate. = TRUE
-        )
+        warning("Feature names cannot have underscores ('_'), ",
+            "replacing with dashes ('-')", immediate.=TRUE)
         rownames(m) <- gsub('_', '-', s)
     }
     # meta data
@@ -100,7 +98,10 @@ scGetAssayGDS <- function(gdsfn, name="counts", key="rna_", row_data=TRUE,
         {
             v <- as.data.frame(v)
             if (!identical(rownames(m), rownames(v)))
-                stop("The rownames of 'rowData()' should be the same as 'count' matrix.")
+            {
+                stop("The rownames of 'rowData()' should be ",
+                    "the same as 'count' matrix.")
+            }
             meta_data <- v
         }
     }

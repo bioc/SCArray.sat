@@ -165,7 +165,7 @@ SetAssayData.SCArrayAssay <- function(object,
     if (is(object@counts2, "SC_GDSMatrix"))
         s <- scGetFiles(object@counts2)
     if (is(object@data2, "SC_GDSMatrix"))
-           s <- c(s, scGetFiles(object@data2))
+        s <- c(s, scGetFiles(object@data2))
     if (is(object@scale.data2, "SC_GDSMatrix"))
         s <- c(s, scGetFiles(object@scale.data2))
     unique(s)
