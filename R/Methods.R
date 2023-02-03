@@ -272,6 +272,7 @@ NormalizeData.SC_GDSMatrix <- function(object,
 
 x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
 {
+    stopifnot(is.numeric(scale.max), length(scale.max)==1L)
     if (center && scale)
     {
         v <- scRowMeanVar(x, na.rm=TRUE)  # calculate mean and var together
@@ -292,7 +293,13 @@ x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
         }
     }
     # set a bound and output
-    scSetMax(x, scale.max)
+    if (is(x, "SC_GDSArray"))
+    {
+        scSetMax(x, scale.max)
+    } else {
+        x[x > scale.max] <- scale.max
+        x
+    }
 }
 
 x_regress_out <- function(x, latent.data=NULL, out_nd=NULL, 
@@ -347,10 +354,13 @@ x_regress_out <- function(x, latent.data=NULL, out_nd=NULL,
     }, grid=gd, as.sparse=NA, BPPARAM=NULL)
     if (verbose) close(pb)
     # output
-    if (!is.null(out_nd))
+    if (is.null(out_nd))
+    {
+        ans <- do.call(rbind, lst)
+        colnames(ans) <- colnames(x)
+    } else {
         ans <- colnames(x)
-    else
-        ans <- do.call(rbind, ans)
+    }
     ans
 }
 
@@ -358,7 +368,7 @@ x_regress_out <- function(x, latent.data=NULL, out_nd=NULL,
 ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, block.size=1000,
-    min.cells.to.block=3000, verbose=TRUE, use_gds=TRUE, ...)
+    min.cells.to.block=3000, verbose=TRUE, use_gds=TRUE, rm_tmpfile=TRUE, ...)
 {
     # check
     x_check(object, "Calling ScaleData.SC_GDSMatrix() with %s ...")
@@ -370,14 +380,17 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     } else {
         features <- rownames(object)
     }
-    object.names <- dimnames(object)
+    if (anyNA(split.by))
+        stop("'split.by' should not contain NA.")
     if (is.null(split.by)) split.by <- TRUE
     split.cells <- split(colnames(object), split.by)
+    object.names <- dimnames(object)
     CheckGC()
 
     # min.cells.to.block <- min(min.cells.to.block, ncol(object))
 
     # use DelayedMatrix ?
+    resid_gdsfn <- NULL    # temporary file name
     if (is.logical(use_gds))
     {
         if (isTRUE(use_gds))
@@ -436,6 +449,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 warning("Overwriting the file '", resid_gdsfn, "'",
                     call.=FALSE, immediate.=TRUE)
             }
+            # create a GDS file for regression residuals
             outf <- createfn.gds(resid_gdsfn)
             on.exit(closefn.gds(outf))  # in case fail
             # a new GDS node storing matrix
@@ -463,20 +477,18 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         if (is.null(out_nd))
         {
             # in-memory matrix
-            object <- do.call(cbind, object)
+            object <- do.call(cbind, lst)
             gds_colnm <- colnames(object)
         } else {
             on.exit()
             closefn.gds(outf)  # close the GDS file
             gds_colnm <- unlist(lst)
+            object <- t(scArray(resid_gdsfn, "residuals"))
         }
         if (!identical(gds_colnm, colnames(object)))
         {
             i <- match(colnames(object), gds_colnm)
-            object <- scArray(resid_gdsfn, "residuals")
             object <- object[, i]
-        } else {
-            object <- t(scArray(resid_gdsfn, "residuals"))
         }
 
         use.umi <- ifelse(model.use!="linear", TRUE, use.umi)
@@ -504,7 +516,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     # output variable
     out_nd <- NULL
     if (is.character(use_gds) &&
-        (length(split.cells) > 1L) || !is.null(vars.to.regress))
+        (length(split.cells)>1L || !is.null(vars.to.regress)))
     {
         # use DelayedMatrix
         if (verbose)
@@ -517,6 +529,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                     call.=FALSE, immediate.=TRUE)
             }
         }
+        # create a GDS file
         outf <- createfn.gds(use_gds)
         on.exit(closefn.gds(outf))  # in case fail
         # a new GDS node storing matrix
@@ -581,6 +594,14 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         scaled.data <- scaled.data[, i]
     }
     dimnames(scaled.data) <- object.names
+
+    # clean temp data
+    if (!is.null(resid_gdsfn) && isTRUE(rm_tmpfile))
+    {
+        if (verbose) .cat("Delete ", sQuote(resid_gdsfn))
+        unlink(resid_gdsfn, force=TRUE)
+    }
+
     CheckGC()
     return(scaled.data)
 }

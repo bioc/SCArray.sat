@@ -4,7 +4,7 @@ Title: Large-scale single-cell RNA-seq data analysis using GDS files and
         Seurat
 Version: 0.99.0
 Date: 2023-02-03
-Depends: methods, SCArray (>= 1.7.5), SeuratObject (>= 4.0), Seurat (>= 4.0)
+Depends: methods, SCArray (>= 1.7.7), SeuratObject (>= 4.0), Seurat (>= 4.0)
 Imports: S4Vectors, utils, stats, BiocGenerics, gdsfmt, DelayedArray,
         BiocSingular, SummarizedExperiment
 Suggests: RUnit, knitr, markdown, rmarkdown
