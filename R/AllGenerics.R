@@ -45,7 +45,8 @@ subset.SCArrayAssay <- function(x, cells=NULL, features=NULL, ...)
         features <- rownames(x)
     } else if (anyNA(features))
     {
-        warning("NAs passed in the features vector, removing NAs", immediate.=TRUE)
+        warning("NAs passed in the features vector, removing NAs",
+            immediate.=TRUE)
         features <- na.omit(features)
     }
     if (all(vapply(list(features, cells), FUN=length, TRUE) == dim(x)))
@@ -108,15 +109,14 @@ SetAssayData.SCArrayAssay <- function(object,
         s <- rownames(new.data)
         if (any(grepl('_', s, fixed=TRUE)))
         {
-            warning(
-                "Feature names cannot have underscores ('_'), replacing with dashes ('-')",
-                call.=FALSE, immediate.=TRUE)
+            warning("Feature names cannot have underscores ('_'), ",
+                "replacing with dashes ('-')", call.=FALSE, immediate.=TRUE)
             rownames(new.data) <- gsub('_', '-', s, fixed=TRUE)
         }
         if (ncol(new.data) != ncol(object))
         {
-            stop("The new data doesn't have the same number of cells as the current data",
-                call.=FALSE)
+            stop("The new data doesn't have the same number of cells ",
+                "as the current data", call.=FALSE)
         }
         num.counts <- nrow(object)
         counts.names <- rownames(object)
@@ -126,9 +126,8 @@ SetAssayData.SCArrayAssay <- function(object,
                 call.=FALSE, immediate.=TRUE)
         } else if (slot %in% c('counts', 'data') && nrow(new.data)!=num.counts)
         {
-            warning(
-                "The new data doesn't have the same number of features as the current data",
-                call.=FALSE, immediate.=TRUE)
+            warning("The new data doesn't have the same number of features ",
+                "as the current data", call.=FALSE, immediate.=TRUE)
         }
         if (!all(rownames(new.data) %in% counts.names))
         {
@@ -144,7 +143,7 @@ SetAssayData.SCArrayAssay <- function(object,
         new.data <- new.data[new.features, colnames(object), drop=FALSE]
         if (slot %in% c('counts', 'data') && !all(dim(new.data)==dim(object)))
         {
-            stop("Attempting to add a different number of cells and/or features",
+            stop("Attempting to add a different number of cells or features",
                 call.=FALSE)
         }
     }
@@ -261,6 +260,4 @@ CheckMatrix.SC_GDSMatrix <- function(object, checks=NULL, ...)
         warning("Input matrix contains NA/NaN or infinite values.")
     invisible()
 }
-
-
 
