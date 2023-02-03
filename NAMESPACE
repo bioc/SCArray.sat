@@ -21,6 +21,7 @@ S3method(NormalizeData, SC_GDSMatrix)
 S3method(ScaleData, SC_GDSMatrix)
 S3method(FindVariableFeatures, SC_GDSMatrix)
 S3method(RunPCA, SC_GDSMatrix)
+S3method(CheckMatrix, SC_GDSMatrix)
 
 
 # ================================

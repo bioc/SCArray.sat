@@ -241,3 +241,26 @@ as.sparse.DelayedMatrix <- function(x, ...)
 }
 
 
+#######################################################################
+# S3 Methods for SC_GDSMatrix
+
+CheckMatrix.SC_GDSMatrix <- function(object, checks=NULL, ...)
+{
+    # check efficient row or column
+    if (SCArray:::x_type(object) == 2L)
+        gd <- rowAutoGrid(object)
+    else
+        gd <- colAutoGrid(object)
+    # block read
+    flag <- blockReduce(function(bk, v)
+    {
+        if (is(bk, "SparseArraySeed")) bk <- as(bk, "sparseMatrix")
+        v || anyNA(bk) || any(is.infinite(bk))
+    }, object, FALSE, grid=gd, as.sparse=NA, verbose=FALSE, BREAKIF=identity)
+    if (flag)
+        warning("Input matrix contains NA/NaN or infinite values.")
+    invisible()
+}
+
+
+
