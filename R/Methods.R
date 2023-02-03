@@ -43,16 +43,14 @@
     # check that dimnames of input counts are unique
     if (anyDuplicated(rownames(m)))
     {
-        warning(
-            "Non-unique features (rownames) present in the input matrix, making unique",
-            call.=FALSE, immediate.=TRUE)
+        warning("Non-unique features (rownames) present in the input matrix",
+            ", making unique", call.=FALSE, immediate.=TRUE)
         rownames(m) <- make.unique(rownames(m))
     }
     if (anyDuplicated(colnames(m)))
     {
-        warning(
-            "Non-unique cell names (colnames) present in the input matrix, making unique",
-            call.=FALSE, immediate.=TRUE)
+        warning("Non-unique cell names (colnames) present in the input matrix",
+            ", making unique", call.=FALSE, immediate.=TRUE)
         colnames(m) <- make.unique(colnames(m))
     }
     if (is.null(colnames(m)))
@@ -84,10 +82,11 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
 {
     if (missing(counts) && missing(data))
     {
-        stop("Must provide either 'counts' or 'data'")
+        stop("Must provide either 'counts' or 'data'.")
     } else if (!missing(counts) && !missing(data))
     {
-        stop("Either 'counts' or 'data' must be missing; both cannot be provided")
+        stop("Either 'counts' or 'data' must be missing; ",
+            "both cannot be provided.")
     } else if (!missing(counts))
     {
         # if not DelayedArray
@@ -146,17 +145,15 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
     data <- .form_mat_names(data)
     if (any(grepl('_', rownames(counts))) || any(grepl('_', rownames(data))))
     {
-        warning(
-            "Feature names cannot have underscores ('_'), replacing with dashes ('-')",
-            call.=FALSE, immediate.=TRUE)
+        warning("Feature names cannot have underscores ('_'), ",
+            "replacing with dashes ('-')", call.=FALSE, immediate.=TRUE)
         rownames(counts) <- gsub('_', '-', rownames(counts))
         rownames(data) <- gsub('_', '-', rownames(data))
     }
     if (any(grepl('|', rownames(counts), fixed=TRUE)) || any(grepl('|', rownames(data), fixed=TRUE)))
     {
-        warning(
-            "Feature names cannot have pipe characters ('|'), replacing with dashes ('-')",
-            call.=FALSE, immediate.=TRUE)
+        warning("Feature names cannot have pipe characters ('|'), ",
+            "replacing with dashes ('-')", call.=FALSE, immediate.=TRUE)
         rownames(counts) <- gsub('|', '-', rownames(counts), fixed=TRUE)
         rownames(data) <- gsub('|', '-', rownames(data), fixed=TRUE)
     }
@@ -185,7 +182,8 @@ CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
     {
         if (!all(rownames(meta.data) %in% colnames(counts)))
         {
-            warning("Some cells in meta.data not present in provided counts matrix",
+            warning(
+                "Some cells in meta.data not present in provided counts matrix",
                 immediate.=TRUE)
         }
     }
@@ -416,8 +414,8 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         notfound <- setdiff(vars.to.regress, colnames(latent.data))
         if (length(notfound) == length(vars.to.regress))
         {
-            stop("None of the requested variables to regress are present in the object.",
-                call.=FALSE)
+            stop("None of the requested variables to regress ",
+                "are present in the object.", call.=FALSE)
         } else if (length(notfound) > 0L)
         {
             warning("Requested variables to regress not in object: ",
@@ -445,7 +443,10 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 valdim=c(ncol(object), 0L), replace=TRUE)
         }
         if (verbose && x_warn_speed(object))
-            message("Regressing maybe faster with a larger block size via setAutoBlockSize()")
+        {
+            message("Regressing maybe faster with a larger block size ",
+                "via setAutoBlockSize()")
+        }
 
         # run regression
         lst <- lapply(names(split.cells), FUN=function(x)
@@ -677,7 +678,10 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
 
         # get variance after feature standardization
         if (verbose)
-            .cat("Calculating feature variances of standardized and clipped values")
+        {
+            .cat("Calculating feature variances ",
+                "of standardized and clipped values")
+        }
         hvf$variance.standardized <- .row_var_std(
             object, hvf$mean, sqrt(hvf$variance.expected),
             clip.max, verbose)
@@ -703,11 +707,13 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         names(data.x.bin) <- names(f_mean)
         mean.y <- tapply(f_dispersion, data.x.bin, FUN=mean)
         sd.y <- tapply(f_dispersion, data.x.bin, FUN=sd)
-        f_dispersion.scaled <- (f_dispersion - mean.y[as.numeric(data.x.bin)]) /
+        f_dispersion.scaled <-
+            (f_dispersion - mean.y[as.numeric(data.x.bin)]) /
             sd.y[as.numeric(data.x.bin)]
         names(f_dispersion.scaled) <- names(f_mean)
         hvf <- data.frame(f_mean, f_dispersion, f_dispersion.scaled)
-        colnames(hvf) <- paste0('mvp.', c('mean', 'dispersion', 'dispersion.scaled'))
+        colnames(hvf) <- paste0('mvp.',
+            c('mean', 'dispersion', 'dispersion.scaled'))
     }
 
     # output
@@ -726,7 +732,8 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
     x_msg("Calling RunPCA.SCArrayAssay() ...")
     if (length(VariableFeatures(object))==0L && is.null(features))
     {
-        stop("Variable features haven't been set. Run FindVariableFeatures() or provide a vector of feature names.")
+        stop("Variable features haven't been set. ",
+            "Run FindVariableFeatures() or provide a vector of feature names.")
     }
     data.use <- GetAssayData(object, "scale.data")
     if (NROW(data.use) == 0L)
@@ -741,7 +748,8 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
         if (verbose)
         {
             warning(paste0("The following ", length(features.exclude),
-                " features requested have not been scaled (running reduction without them): ",
+                " features requested have not been scaled ",
+                "(running reduction without them): ",
                 paste0(features.exclude, collapse = ", ")), immediate.=TRUE)
         }
     }
@@ -754,7 +762,8 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
         if (verbose)
         {
             warning(paste0("The following ", length(features.exclude),
-                " features requested have zero variance (running reduction without them): ",
+                " features requested have zero variance ",
+                "(running reduction without them): ",
                 paste0(features.exclude, collapse = ", ")), immediate.=TRUE)
         }
     }
@@ -778,8 +787,8 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
 }
 
 RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
-    weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5), nfeatures.print=30,
-    reduction.key="PC_", seed.use=42, approx=TRUE, ...)
+    weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
+    nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE, ...)
 {
     x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
 
@@ -829,12 +838,8 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         misc = list(total.variance=total.variance)
     )
     if (verbose)
-    {
-        msg <- capture.output(print(
-            reduction.data, dims=ndims.print, nfeatures=nfeatures.print
-        ))
-        .cat(paste(msg, collapse='\n'))
-    }
+        print(reduction.data, dims=ndims.print, nfeatures=nfeatures.print)
+
     return(reduction.data)
 }
 
