@@ -49,6 +49,14 @@ x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
     invisible()
 }
 
+# return TRUE, if inefficient row enumeration is performed
+x_warn_speed <- function(x, max_bk_num=5L)
+{
+    stopifnot(is(x, "DelayedArray"))
+    g <- rowAutoGrid(x)
+    return(length(g) > max_bk_num)
+}
+
 
 
 #######################################################################

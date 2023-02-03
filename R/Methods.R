@@ -444,7 +444,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
             out_nd <- add.gdsn(outf, "residuals", storage="double",
                 valdim=c(ncol(object), 0L), replace=TRUE)
         }
-        if (verbose)
+        if (verbose && x_warn_speed(object))
             message("Regressing maybe faster with a larger block size via setAutoBlockSize()")
 
         # run regression
