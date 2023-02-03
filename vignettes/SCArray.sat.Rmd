@@ -41,8 +41,8 @@ The SCArray.sat package takes advantage of the S3 object-oriented methods define
 | **Methods**               | **Description**           | **Note**                   |
 |:--------------------------|:--------------------------|:---------------------------|
 |NormalizeData.SC_GDSMatrix()        |Normalize raw count data | Store a DelayedMatrix  |
-|ScaleData.SC_GDSMatrix()            |Scale and center the normalized data |   	|
-|FindVariableFeatures.SC_GDSMatrix() |Identifies features |   	|
+|ScaleData.SC_GDSMatrix()            |Scale and center the normalized data |    |
+|FindVariableFeatures.SC_GDSMatrix() |Identifies features |     |
 |RunPCA.SC_GDSMatrix()               |Run a PCA dimensionality reduction |       |
 
 *SC_GDSMatrix: GDS- and single-cell- specific DelayedMatrix.*
@@ -159,8 +159,8 @@ After the file conversion, users can use this GDS file with Seurat to analyze th
 The following R script is used in the benchmark for testing GDS files, and the R codes for testing the Seurat Object are similar except the input file.
 ```R
 suppressPackageStartupMessages({
-	library(Seurat)
-	library(SCArray.sat)
+    library(Seurat)
+    library(SCArray.sat)
 })
 
 fn <- "1M_sc_neurons_n100.gds"
