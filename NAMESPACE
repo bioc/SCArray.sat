@@ -52,7 +52,7 @@ importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
 importClassesFrom(DelayedArray, DelayedArray, DelayedMatrix)
 importFrom(DelayedArray,
     DelayedArray, blockApply, currentBlockId, rowAutoGrid, colAutoGrid)
-importClassesFrom(SCArray, SC_GDSArray, SC_GDSMatrix)
+importClassesFrom(SCArray, SCArrayFileClass, SC_GDSArray, SC_GDSMatrix)
 importFrom(SCArray,
     scArray, scExperiment, scObj, scSetMax, scRowMeanVar, scGetFiles, scMemory,
     colSums, colVars, rowSums, rowMeans, rowVars, rowSds, rowMins)

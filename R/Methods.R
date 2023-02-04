@@ -353,15 +353,141 @@ x_regress_out <- function(x, latent.data=NULL, out_nd=NULL,
         ans
     }, grid=gd, as.sparse=NA, BPPARAM=NULL)
     if (verbose) close(pb)
+
     # output
     if (is.null(out_nd))
     {
         ans <- do.call(rbind, lst)
         colnames(ans) <- colnames(x)
+        ans
     } else {
-        ans <- colnames(x)
+        colnames(x)
     }
-    ans
+}
+
+scale_regress_out <- function(object, features, vars.to.regress, latent.data,
+    split.cells, use_gds, model.use='linear', use.umi=FALSE, verbose=TRUE)
+{
+    # check
+    if (verbose)
+        .cat("Regressing out: ", paste(vars.to.regress, collapse=", "))
+    if (is.null(latent.data))
+    {
+        latent.data <- data.frame(row.names=colnames(object))
+    } else {
+        latent.data <- latent.data[colnames(object), , drop = FALSE]
+        rownames(latent.data) <- colnames(object)
+    }
+    if (any(vars.to.regress %in% rownames(object)))
+    {
+        s <- intersect(vars.to.regress, rownames(object))
+        if (verbose)
+            .cat("Loading the matrix for ", paste(s, collapse=", "))
+        x <- object[s, , drop=FALSE]
+        latent.data <- cbind(latent.data, as.matrix(t(x)))
+        remove(x)
+    }
+    notfound <- setdiff(vars.to.regress, colnames(latent.data))
+    if (length(notfound) == length(vars.to.regress))
+    {
+        stop("None of the requested variables to regress ",
+            "are present in the object.", call.=FALSE)
+    } else if (length(notfound) > 0L)
+    {
+        warning("Requested variables to regress not in object: ",
+            paste(notfound, collapse = ", "), call.=FALSE, immediate.=TRUE)
+        vars.to.regress <- colnames(latent.data)
+    }
+
+    # use DelayedMatrix ?
+    resid_gdsfn <- outf <- out_nd <- NULL
+    if (is.character(use_gds))
+    {
+        resid_gdsfn <- paste0("_temp", use_gds)
+        if (verbose)
+            .cat("Writing to ", sQuote(resid_gdsfn))
+        if (file.exists(use_gds))
+        {
+            warning("Overwriting the file '", resid_gdsfn, "'",
+                call.=FALSE, immediate.=TRUE)
+        }
+        # create a GDS file for regression residuals
+        outf <- createfn.gds(resid_gdsfn)
+        on.exit(closefn.gds(outf))  # in case fail
+    }
+    if (verbose && x_warn_speed(object))
+    {
+        message("Regressing maybe faster with a larger block size ",
+            "via setAutoBlockSize()")
+    }
+
+    # run regression
+    lst <- lapply(seq_along(split.cells), FUN=function(i)
+    {
+        if (verbose && length(split.cells) > 1L)
+            .cat("Regressing out variables from split ", names(split.cells)[i])
+        ss <- split.cells[[i]]
+        if (!is.null(outf))
+        {
+            # a new GDS node storing matrix
+            out_nd <- add.gdsn(outf, sprintf("residuals.%d", i),
+                storage="double", valdim=c(length(ss), 0L))
+        }
+        x_regress_out(
+            object[, ss, drop=FALSE], latent.data[ss, , drop=FALSE],
+            out_nd, model.use, verbose)
+    })
+
+    # finally
+    if (is.null(outf))
+    {
+        # in-memory matrix
+        x <- do.call(cbind, lst)
+        gds_colnm <- colnames(x)
+    } else {
+        # on-disk backend
+        on.exit()
+        if (length(split.cells) == 1L)
+        {
+            closefn.gds(outf)  # close the GDS file
+            x <- t(scArray(resid_gdsfn, "residuals.1"))
+        } else {
+            # merge
+            closefn.gds(outf)  # close the GDS file
+            outf <- openfn.gds(resid_gdsfn, readonly=FALSE)
+            out_nd <- add.gdsn(outf, "residuals", storage="double",
+                valdim=c(nrow(object), 0L))
+            for (i in seq_along(split.cells))
+            {
+                # block write
+                m <- scArray(outf, sprintf("residuals.%d", i))
+                blockReduce(function(bk, v) {
+                    append.gdsn(out_nd, t(bk))
+                }, m, init=NULL, grid=rowAutoGrid(m))
+            }
+            remove(m)
+            closefn.gds(outf)  # close the GDS file
+            x <- scArray(resid_gdsfn, "residuals")
+        }
+        gds_colnm <- unlist(lst)
+    }
+    if (!identical(gds_colnm, colnames(object)))
+    {
+        i <- match(colnames(object), gds_colnm)
+        object <- x[, i]
+    } else
+        object <- x
+
+    use.umi <- ifelse(model.use!="linear", TRUE, use.umi)
+    if (use.umi)
+    {
+        m <- rowMins(object, na.rm=TRUE)
+        object <- log1p(object - m)
+    }
+
+    CheckGC()
+    # output
+    list(object=object, filename=resid_gdsfn)
 }
 
 
@@ -406,99 +532,11 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
     if (!is.null(vars.to.regress))
     {
-        if (verbose)
-            .cat("Regressing out: ", paste(vars.to.regress, collapse=", "))
-        if (is.null(latent.data))
-        {
-            latent.data <- data.frame(row.names=colnames(object))
-        } else {
-            latent.data <- latent.data[colnames(object), , drop = FALSE]
-            rownames(latent.data) <- colnames(object)
-        }
-        if (any(vars.to.regress %in% rownames(object)))
-        {
-            s <- intersect(vars.to.regress, rownames(object))
-            if (verbose)
-                .cat("Loading the matrix for ", paste(s, collapse=", "))
-            x <- object[s, , drop=FALSE]
-            latent.data <- cbind(latent.data, as.matrix(t(x)))
-            remove(x)
-        }
-        notfound <- setdiff(vars.to.regress, colnames(latent.data))
-        if (length(notfound) == length(vars.to.regress))
-        {
-            stop("None of the requested variables to regress ",
-                "are present in the object.", call.=FALSE)
-        } else if (length(notfound) > 0L)
-        {
-            warning("Requested variables to regress not in object: ",
-                paste(notfound, collapse = ", "),
-                call.=FALSE, immediate.=TRUE)
-            vars.to.regress <- colnames(latent.data)
-        }
-
-        # use DelayedMatrix ?
-        out_nd <- NULL
-        if (is.character(use_gds))
-        {
-            resid_gdsfn <- paste0("_temp", use_gds)
-            if (verbose)
-                .cat("Writing to ", sQuote(resid_gdsfn))
-            if (file.exists(use_gds))
-            {
-                warning("Overwriting the file '", resid_gdsfn, "'",
-                    call.=FALSE, immediate.=TRUE)
-            }
-            # create a GDS file for regression residuals
-            outf <- createfn.gds(resid_gdsfn)
-            on.exit(closefn.gds(outf))  # in case fail
-            # a new GDS node storing matrix
-            out_nd <- add.gdsn(outf, "residuals", storage="double",
-                valdim=c(ncol(object), 0L), replace=TRUE)
-        }
-        if (verbose && x_warn_speed(object))
-        {
-            message("Regressing maybe faster with a larger block size ",
-                "via setAutoBlockSize()")
-        }
-
-        # run regression
-        lst <- lapply(names(split.cells), FUN=function(x)
-        {
-            if (verbose && length(split.cells) > 1L)
-                .cat("Regressing out variables from split ", x)
-            x_regress_out(
-                object[, split.cells[[x]], drop = FALSE],
-                latent.data[split.cells[[x]], , drop = FALSE],
-                out_nd, model.use, verbose)
-        })
-
-        # finally
-        if (is.null(out_nd))
-        {
-            # in-memory matrix
-            object <- do.call(cbind, lst)
-            gds_colnm <- colnames(object)
-        } else {
-            on.exit()
-            closefn.gds(outf)  # close the GDS file
-            gds_colnm <- unlist(lst)
-            object <- t(scArray(resid_gdsfn, "residuals"))
-        }
-        if (!identical(gds_colnm, colnames(object)))
-        {
-            i <- match(colnames(object), gds_colnm)
-            object <- object[, i]
-        }
-
-        use.umi <- ifelse(model.use!="linear", TRUE, use.umi)
-        if (use.umi)
-        {
-            object <- log1p(object - rowMins(object, na.rm=TRUE))
-        }
-
+        v <- scale_regress_out(object, features, vars.to.regress,
+            latent.data, split.cells, use_gds, model.use, use.umi, verbose)
+        object <- v$object
         dimnames(object) <- object.names
-        CheckGC()
+        resid_gdsfn <- v$filename
     }
 
     if (verbose && (do.scale || do.center))
