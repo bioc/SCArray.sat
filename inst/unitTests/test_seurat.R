@@ -75,6 +75,14 @@ test_sce_matrix <- function()
 	m1 <- GetAssayData(a1, "scale.data")
 	checkEquals(m0, as.matrix(m1), "scaled data with regressing out the variables")
 
+	# scale with split.by
+	ss <- rep(c(TRUE, FALSE), length.out=ncol(m1))
+	a1 <- ScaleData(GetAssay(d1), split.by=ss)
+	a0 <- ScaleData(GetAssay(d0), split.by=ss)
+	m0 <- GetAssayData(a0, "scale.data")
+	m1 <- GetAssayData(a1, "scale.data")
+	checkEquals(m0, as.matrix(m1), "scaled data with split.by")
+
 	# scale
 	d1 <- ScaleData(d1)
 	d0 <- ScaleData(d0)

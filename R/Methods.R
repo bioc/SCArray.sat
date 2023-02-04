@@ -365,7 +365,7 @@ x_regress_out <- function(x, latent.data=NULL, out_nd=NULL,
     }
 }
 
-scale_regress_out <- function(object, features, vars.to.regress, latent.data,
+ScaleRegressOut <- function(object, features, vars.to.regress, latent.data,
     split.cells, use_gds, model.use='linear', use.umi=FALSE, verbose=TRUE)
 {
     # check
@@ -461,9 +461,8 @@ scale_regress_out <- function(object, features, vars.to.regress, latent.data,
             {
                 # block write
                 m <- scArray(outf, sprintf("residuals.%d", i))
-                blockReduce(function(bk, v) {
-                    append.gdsn(out_nd, t(bk))
-                }, m, init=NULL, grid=rowAutoGrid(m))
+                blockReduce(function(bk, v) append.gdsn(out_nd, t(bk)),
+                    m, init=NULL, grid=rowAutoGrid(m))
             }
             remove(m)
             closefn.gds(outf)  # close the GDS file
@@ -532,7 +531,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
     if (!is.null(vars.to.regress))
     {
-        v <- scale_regress_out(object, features, vars.to.regress,
+        v <- ScaleRegressOut(object, features, vars.to.regress,
             latent.data, split.cells, use_gds, model.use, use.umi, verbose)
         object <- v$object
         dimnames(object) <- object.names
