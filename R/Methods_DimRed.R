@@ -89,6 +89,8 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     {
         total.variance <- sum(colVars(object))
         npcs <- min(npcs, ncol(object)-1L)
+        # the input matrix has been centered
+        # fold=1 to use covariance matrix
         pca_rv <- pca_func(object, k=npcs, center=FALSE, scale=FALSE,
             deferred=FALSE, fold=1)
         sdev <- pca_rv$d / sqrt(max(1L, nrow(object)-1L))
@@ -102,6 +104,8 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     } else {
         total.variance <- sum(rowVars(object))
         npcs <- min(npcs, nrow(object)-1L)
+        # the input matrix has been centered
+        # fold=1 to use covariance matrix
         pca_rv <- pca_func(t(object), k=npcs, center=FALSE, scale=FALSE,
             deferred=FALSE, fold=1)
         f_loadings <- pca_rv$v
