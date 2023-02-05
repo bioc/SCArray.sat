@@ -193,7 +193,7 @@ With large test datasets, the SCArray.sat package significantly reduces the memo
 
 ~
 
-## Session Info
+## Session Information
 
 ```{r}
 # print version information about R, the OS and attached or loaded packages
