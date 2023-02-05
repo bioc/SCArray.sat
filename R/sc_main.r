@@ -50,10 +50,13 @@ x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
 }
 
 # return TRUE, if inefficient row enumeration is performed
-x_warn_speed <- function(x, max_bk_num=5L)
+x_warn_speed <- function(x, use_row=TRUE, max_bk_num=10L)
 {
     stopifnot(is(x, "DelayedArray"))
-    g <- rowAutoGrid(x)
+    if (isTRUE(use_row))
+        g <- rowAutoGrid(x)
+    else
+        g <- colAutoGrid(x)
     return(length(g) > max_bk_num)
 }
 
