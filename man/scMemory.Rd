@@ -32,6 +32,9 @@ a \code{Assay} object.
 }
 
 \author{Xiuwen Zheng}
+\seealso{
+    \code{\link[SCArray]{scMemory}}
+}
 
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
