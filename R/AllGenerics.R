@@ -218,7 +218,7 @@ setMethod("scGetFiles", "Seurat", .scget_seurat)
 
 .scmemory_seurat <- function(x, assay=NULL, slot=NULL, ...)
 {
-    if (is.null(assay)) assay <- Assays(x)
+    if (is.null(assay)) assay <- x@active.assay
     stopifnot(is.character(assay))
     for (nm in assay)
         x[[nm]] <- scMemory(x[[nm]], slot=slot, ...)

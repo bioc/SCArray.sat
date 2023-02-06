@@ -16,9 +16,10 @@ scMemory(x, ...)
 
 \arguments{
     \item{x}{input R object (e.g., a Seurat object)}
-    \item{assay}{NULL, or a character vector for assay names}
-    \item{slot}{NULL, or a character vector for "counts", "data" and
-        "scale.data"; see details}
+    \item{assay}{NULL for using the active assay, or a list of assay names}
+    \item{slot}{NULL for all \code{"counts"}, \code{"data"} and
+        \code{"scale.data"}; or a character vector including \code{"counts"},
+        \code{"data"} or \code{"scale.data"}; see details}
     \item{...}{additional arguments passed to specific methods}
 }
 \details{

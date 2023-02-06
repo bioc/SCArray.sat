@@ -29,13 +29,14 @@ S3method(CheckMatrix, SC_GDSMatrix)
 
 import(methods)
 import(S4Vectors)
-importFrom(DelayedArray, blockReduce, colAutoGrid, currentViewport, sweep)
-importFrom(gdsfmt, add.gdsn, append.gdsn, closefn.gds, createfn.gds,
-    openfn.gds)
-importFrom(utils, capture.output, packageVersion, txtProgressBar,
-    setTxtProgressBar)
+importFrom(DelayedArray,
+    blockReduce, colAutoGrid, currentViewport, sweep)
+importFrom(gdsfmt,
+    add.gdsn, append.gdsn, closefn.gds, createfn.gds, openfn.gds)
+importFrom(utils,
+    capture.output, packageVersion, txtProgressBar, setTxtProgressBar)
 importFrom(stats, loess, quantile, as.formula, glm, lm, residuals)
-importFrom(BiocGenerics, counts)
+importFrom(BiocGenerics, counts, path)
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 importFrom(SummarizedExperiment, assays, rowData)
 
