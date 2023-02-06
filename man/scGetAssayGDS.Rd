@@ -5,11 +5,12 @@
     Gets Seurat Assay object.
 }
 \usage{
-scGetAssayGDS(gdsfn, name="counts", key="rna_", row_data=TRUE, check=TRUE,
+scGetAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
     verbose=TRUE)
 }
 \arguments{
-    \item{gdsfn}{a file name for the GDS file}
+    \item{gdsfile}{a file name for the GDS file, or a \code{SCArrayFileClass}
+        object}
     \item{name}{characters for the name of data matrix in the GDS file}
     \item{key}{characters for the Assay key}
     \item{row_data}{if \code{TRUE}, add \code{rowData()} to the feature-level
@@ -23,7 +24,8 @@ scGetAssayGDS(gdsfn, name="counts", key="rna_", row_data=TRUE, check=TRUE,
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{SCArrayAssay}}
+    \code{\link{SCArrayAssay}}, \code{\link{SCArrayFileClass}},
+    \code{\link{scExperiment}}
 }
 
 \examples{

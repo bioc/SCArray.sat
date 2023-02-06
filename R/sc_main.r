@@ -64,19 +64,24 @@ x_warn_speed <- function(x, use_row=TRUE, max_bk_num=10L)
 
 #######################################################################
 
-scGetAssayGDS <- function(gdsfn, name="counts", key="rna_", row_data=TRUE,
+scGetAssayGDS <- function(gdsfile, name="counts", key="rna_", row_data=TRUE,
     check=TRUE, verbose=TRUE)
 {
     # check
-    stopifnot(is.character(gdsfn), length(gdsfn)==1L)
+    stopifnot(is.character(gdsfile) || inherits(gdsfile, "SCArrayFileClass"))
     stopifnot(is.character(name), length(name)==1L)
     stopifnot(is.character(key), length(key)==1L, !is.na(key))
     stopifnot(is.logical(row_data) || is.data.frame(row_data))
     stopifnot(is.logical(check), length(check)==1L)
     stopifnot(is.logical(verbose), length(verbose)==1L)
     # load gds data
-    if (verbose) .cat("Input: ", gdsfn)
-    sce <- scExperiment(gdsfn)
+    if (verbose)
+    {
+        s <- gdsfile
+        if (inherits(s, "SCArrayFileClass")) s <- path(gdsfile)
+        .cat("Input: ", s)
+    }
+    sce <- scExperiment(gdsfile)
     lst <- assays(sce)
     if (length(lst) == 0L) stop("No assay.")
     if (is.na(name)) name <- names(lst)[1L]
