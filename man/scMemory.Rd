@@ -36,14 +36,14 @@ a \code{Assay} object.
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-x <- scGetAssayGDS(fn)
-d1 <- Seurat::CreateSeuratObject(x)
+a <- scGetAssayGDS(fn)
+d1 <- Seurat::CreateSeuratObject(a)
 is(GetAssay(d1))
 
 d2 <- scMemory(d1)
 is(GetAssay(d2))
 
-remove(d1, d2)
+remove(a, d1, d2)
 }
 
 \keyword{methods}

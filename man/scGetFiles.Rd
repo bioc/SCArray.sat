@@ -29,5 +29,17 @@ scGetFiles(object, ...)
     \code{\link[SCArray]{scGetFiles}}
 }
 
+\examples{
+fn <- system.file("extdata", "example.gds", package="SCArray")
+
+a <- scGetAssayGDS(fn)
+d <- Seurat::CreateSeuratObject(a)
+
+scGetFiles(a)
+scGetFiles(d)
+
+remove(a, d)
+}
+
 \keyword{methods}
 \keyword{GDS}

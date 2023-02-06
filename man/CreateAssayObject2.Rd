@@ -29,7 +29,24 @@ object. \code{counts} and \code{data} should not be provided at the same time.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{CreateAssayObject}}
+    \code{\link{CreateAssayObject}}, \code{\link{scGetFiles}}
+}
+
+\examples{
+fn <- system.file("extdata", "example.gds", package="SCArray")
+
+x <- scArray(fn, "counts")
+colnames(x) <- paste0("c", 1:ncol(x))
+rownames(x) <- paste0("g", 1:nrow(x))
+x
+
+a <- CreateAssayObject2(x)
+a
+
+scGetFiles(x)
+scGetFiles(a)
+
+remove(x, a)
 }
 
 \keyword{GDS}
