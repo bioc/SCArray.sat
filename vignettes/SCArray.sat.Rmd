@@ -59,11 +59,17 @@ The SCArray.sat package takes advantage of the S3 object-oriented methods define
 # Load the packages
 suppressPackageStartupMessages({
     library(Seurat)
+    library(SCArray)
     library(SCArray.sat)
 })
 
 # Input GDS file with raw counts
 fn <- system.file("extdata", "example.gds", package="SCArray")
+
+# show the file contents
+(f <- scOpen(fn))
+scClose(f)    # close the file
+
 
 # Create a SCArrayAssay object from the GDS file
 a <- scGetAssayGDS(fn)
@@ -188,6 +194,41 @@ q('no')
 With large test datasets, the SCArray.sat package significantly reduces the memory usages compared with the Seurat package, while the in-memory implementation in Seurat is only 2 times faster than SCArray.sat. When the full dataset "Dfull" was tested, Seurat failed to load the data since the number of non-zeros is out of the limit of sparse matrix.
 
 ![**Figure 2**: The benchmark on PCA & UMAP with large datasets.](benchmark.svg)
+
+~
+
+~
+
+## Miscellaneous
+
+### Downgrade SCArrayAssay
+
+The `SCArrayAssay` object can be downgraded to the regular `Assay`. It is useful when the downstream functions or packages do not support DelayedArray. 
+
+```{r}
+is(GetAssay(d))
+
+new_d <- scMemory(d)  # downgrade the active assay
+is(GetAssay(new_d))
+
+is(GetAssayData(d, "scale.data"))  # it is a DelayedMatrix
+
+new_d <- scMemory(d, slot="scale.data")  # downgrade "scale.data" in the active assay
+is(GetAssay(new_d))  # it is still SCArrayAssay
+is(GetAssayData(new_d, "scale.data"))  # in-memory matrix
+```
+
+~
+
+### Debugging
+
+`options(SCArray.verbose=TRUE)` can be used to enable displaying debug information in the SCArray and SCArray.sat packages. For example,
+
+```{r}
+options(SCArray.verbose=TRUE)
+
+d <- ScaleData(d)
+```
 
 ~
 
