@@ -512,8 +512,6 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     object.names <- dimnames(object)
     CheckGC()
 
-    # min.cells.to.block <- min(min.cells.to.block, ncol(object))
-
     # use DelayedMatrix ?
     resid_gdsfn <- NULL    # temporary file name
     if (is.logical(use_gds))
