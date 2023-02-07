@@ -220,6 +220,20 @@ is(GetAssayData(new_d, "scale.data"))  # in-memory matrix
 
 ~
 
+### Conversion between SingleCellExperiment and Seurat
+
+A Seurat object with `SCArrayAssay` can be converted to a Bioconductor `SingleCellExperiment` object using `as.SingleCellExperiment()` in the Seurat package. For example,
+
+```{r}
+is(d)
+
+sce <- as.SingleCellExperiment(d)
+is(sce)
+sce
+```
+
+~
+
 ### Debugging
 
 `options(SCArray.verbose=TRUE)` can be used to enable displaying debug information in the SCArray and SCArray.sat packages. For example,
