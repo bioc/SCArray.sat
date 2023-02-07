@@ -1,7 +1,7 @@
 ---
 title: "Large-scale single-cell RNA-seq data analysis using GDS files and Seurat"
 author: "Dr. Xiuwen Zheng (Genomics Research Center, AbbVie)"
-date: "Jan 2023"
+date: "Feb 2023"
 output:
     html_document:
         theme: default
@@ -201,6 +201,24 @@ With large test datasets, the SCArray.sat package significantly reduces the memo
 
 ## Miscellaneous
 
+### Save SCArrayAssay
+
+The Seurat object with `SCArrayAssay` can be directly saved to a RDS (R object) file, in which the raw counts in the GDS file is not stored in the RDS file. This can avoid data duplication, and is helpful for faster meta data loading. Please keep the GDS and RDS files in the same directory or the same relative paths. The R object can be reloaded later in another R session, and GDS files are reopened internally when accessing the count data.
+
+```{r}
+d
+saveRDS(d, "test.rds")  # save to a RDS file
+
+remove(d)  # delete the variable d
+gc()       # trigger a garbage collection
+
+d <- readRDS("test.rds")  # load from a RDS file
+d
+GetAssayData(d, "counts")  # GDS file reopens automatically
+```
+
+~
+
 ### Downgrade SCArrayAssay
 
 The `SCArrayAssay` object can be downgraded to the regular `Assay`. It is useful when the downstream functions or packages do not support DelayedArray. 
@@ -253,4 +271,8 @@ d <- ScaleData(d)
 ```{r}
 # print version information about R, the OS and attached or loaded packages
 sessionInfo()
+```
+
+```{r echo=FALSE}
+unlink("test.rds", force=TRUE)
 ```
