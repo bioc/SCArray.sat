@@ -514,6 +514,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
     # use DelayedMatrix ?
     resid_gdsfn <- NULL    # temporary file name
+    force_gds <- is.character(use_gds)
     if (is.logical(use_gds))
     {
         if (isTRUE(use_gds))
@@ -551,7 +552,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     # output variable
     out_nd <- NULL
     if (is.character(use_gds) &&
-        (length(split.cells)>1L || !is.null(vars.to.regress)))
+        (force_gds || length(split.cells)>1L || !is.null(vars.to.regress)))
     {
         # use DelayedMatrix
         if (verbose)

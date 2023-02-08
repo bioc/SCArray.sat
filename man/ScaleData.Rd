@@ -51,7 +51,9 @@ When \code{vars.to.regress} and \code{split.by} are both \code{NULL}, an output
 GDS file is not needed, since the resulting DelayedMatrix can be represented
 as common operations on the count matrix. If \code{use_gds=TRUE}, an output
 file name "_scale_data.gds" will be used if it does not exists, or
-"_scale_data2.gds" (if not exists), "_scale_data3.gds" and so on.
+"_scale_data2.gds" (if not exists), "_scale_data3.gds" and so on. If
+\code{use_gds} is an output file name, the resulting data matrix will be saved
+to a GDS file.
     When \code{vars.to.regress} are given, a temporary GDS file (e.g., 
 "_temp_scale_data.gds", \code{use_gds} with a prefix "_temp") will be created
 to store the residuals before scaling. This temporary file will be deleted
