@@ -700,6 +700,7 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
 {
     # check
     x_msg("Calling FindVariableFeatures.SC_GDSMatrix() ...")
+    stopifnot(is.character(selection.method), length(selection.method)==1L)
     CheckDots(...)
 
     # check mean & dispersion functions

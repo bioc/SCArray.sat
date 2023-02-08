@@ -65,6 +65,9 @@ test_sce_matrix <- function()
 	d0 <- FindVariableFeatures(d0, nfeatures=500)
 	checkEquals(HVFInfo(d1), HVFInfo(d0), "HVFInfo")
 
+	# VariableFeatures
+	checkEquals(VariableFeatures(d1), VariableFeatures(d0), "VariableFeatures")
+
 	# scale with regressing out
 	set.seed(100)
 	dd <- data.frame(x1=rnorm(ncol(m1)), x2=rnorm(ncol(m1)),
