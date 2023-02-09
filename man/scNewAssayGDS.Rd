@@ -2,7 +2,7 @@
 \alias{scNewAssayGDS}
 \title{Create Assay Object}
 \description{
-    Creates a new Seurat Assay object (SCArrayAssay).
+    Creates a new Seurat Assay object (SCArrayAssay) from a GDS file.
 }
 \usage{
 scNewAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
@@ -26,7 +26,7 @@ scNewAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
 \author{Xiuwen Zheng}
 \seealso{
     \code{\link{SCArrayAssay}}, \code{\link{SCArrayFileClass}},
-    \code{\link{scExperiment}}
+    \code{\link{scExperiment}}, \code{\link{scNewSeuratGDS}}
 }
 
 \examples{

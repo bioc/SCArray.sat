@@ -69,6 +69,7 @@ scNewAssayGDS <- function(gdsfile, name="counts", key="rna_", row_data=TRUE,
     check=TRUE, verbose=TRUE)
 {
     # check
+    x_msg("Calling scNewAssayGDS() ...")
     stopifnot(is.character(gdsfile) || inherits(gdsfile, "SCArrayFileClass"))
     stopifnot(is.character(name), length(name)==1L)
     stopifnot(is.character(key), length(key)==1L, !is.na(key))
@@ -82,7 +83,7 @@ scNewAssayGDS <- function(gdsfile, name="counts", key="rna_", row_data=TRUE,
         if (inherits(s, "SCArrayFileClass")) s <- path(gdsfile)
         .cat("Input: ", s)
     }
-    sce <- scExperiment(gdsfile)
+    sce <- scExperiment(gdsfile, load.row=isTRUE(row_data))
     lst <- assays(sce)
     if (length(lst) == 0L) stop("No assay.")
     if (is.na(name)) name <- names(lst)[1L]
@@ -120,5 +121,92 @@ scNewAssayGDS <- function(gdsfile, name="counts", key="rna_", row_data=TRUE,
     new(Class = "SCArrayAssay",
         counts2 = m, data2 = m, scale.data2 = NULL, key = key,
         meta.features = meta_data, misc = list())
+}
+
+
+# GDS to Seurat
+scNewSeuratGDS <- function(gdsfile, assay.name=NULL, key=c(counts="rna_"),
+    row_data=TRUE, col_data=TRUE, check=TRUE, verbose=TRUE)
+{
+    # check
+    x_msg("Calling scNewSeuratGDS() ...")
+    stopifnot(is.character(gdsfile) || inherits(gdsfile, "SCArrayFileClass"))
+    stopifnot(is.null(assay.name) || is.character(assay.name))
+    if (is.character(assay.name))
+        stopifnot(length(assay.name) > 1L)
+    stopifnot(is.character(key), length(key) > 0L)
+    stopifnot(is.logical(row_data) || is.data.frame(row_data))
+    stopifnot(is.logical(col_data) || is.data.frame(col_data))
+    stopifnot(is.logical(check), length(check)==1L)
+    stopifnot(is.logical(verbose), length(verbose)==1L)
+
+    # load gds data
+    if (verbose)
+    {
+        s <- gdsfile
+        if (inherits(s, "SCArrayFileClass")) s <- path(gdsfile)
+        .cat("Input: ", s)
+    }
+    sce <- scExperiment(gdsfile, load.row=isTRUE(row_data),
+        load.col=isTRUE(col_data))
+    assay_lst <- assays(sce)
+    if (length(assay_lst) == 0L) stop("No assay.")
+    if (!("counts" %in% names(assay_lst)))
+        stop("'counts' is not in the input GDS file!")
+    if (verbose)
+        .cat("    counts: ", nrow(sce), " x ", ncol(sce))
+
+    # check assay names
+    if (is.null(assay.name))
+        assay.name <- names(assay_lst)
+    assay.name <- unique(c("counts", assay.name[!is.na(assay.name)]))
+    s <- setdiff(assay.name, names(assay_lst))
+    if (length(s))
+    {
+        warning("No ", paste(s, collapse=", "), "!", call.=FALSE,
+            immediate.=TRUE)
+        assay.name <- intersect(assay.name, names(assay_lst))
+    }
+    if (is.na(key["counts"])) key <- c(counts="rna_", key)
+
+    # check feature IDs
+    s <- rownames(sce)
+    if (isTRUE(check) && any(grepl('_', s)))
+    {
+        warning("Feature names cannot have underscores ('_'), ",
+            "replacing with dashes ('-')", immediate.=TRUE)
+        rownames(sce) <- gsub('_', '-', s)
+        assay_lst <- assays(sce)
+    }
+
+    # counts
+    if ("logcounts" %in% assay.name)
+    {
+        a <- CreateAssayObject2(counts(sce), assay_lst[["logcounts"]])
+    } else {
+        a <- CreateAssayObject2(counts(sce))
+    }
+    Key(a) <- unname(Seurat:::UpdateKey(tolower(key["counts"])))
+    meta.data <- NULL
+    if (NCOL(colData(sce)))
+        meta.data <- as.data.frame(colData(sce))
+    object <- CreateSeuratObject(a, meta.data=meta.data)
+    if (NCOL(rowData(sce)))
+        object <- AddMetaData(object, rowData(sce))
+    assay.name <- setdiff(assay.name, c("counts", "logcounts"))
+
+    # Other assays
+    for (nm in assay.name)
+    {
+        a <- CreateAssayObject2(counts=assay_lst[[nm]])
+        k <- key[nm]
+        if (is.na(k)) k <- paste0("rna_", nm)
+        if (!grepl("_$", k)) k <- paste0(k, "_")
+        Key(a) <- unname(Seurat:::UpdateKey(tolower(k)))
+        object[[paste0("RNA_", nm)]] <- assay_lst[[nm]]
+    }
+
+    # output
+    object
 }
 

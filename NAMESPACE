@@ -38,7 +38,7 @@ importFrom(utils,
 importFrom(stats, loess, quantile, as.formula, glm, lm, residuals)
 importFrom(BiocGenerics, counts, path)
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
-importFrom(SummarizedExperiment, assays, rowData)
+importFrom(SummarizedExperiment, assays, colData, rowData)
 
 # Import the classes and methods in SeuratObject & Seurat
 importClassesFrom(SeuratObject, Assay)
