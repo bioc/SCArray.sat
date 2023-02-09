@@ -71,7 +71,7 @@ fn <- system.file("extdata", "example.gds", package="SCArray")
 scClose(f)    # close the file
 
 
-# Create a Seurat object from a GDS file
+# Create a Seurat object from the GDS file
 d <- scNewSeuratGDS(fn)
 class(GetAssay(d))    # SCArrayAssay, derived from Assay
 
