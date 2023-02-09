@@ -23,44 +23,47 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
         stop("Variable features haven't been set. ",
             "Run FindVariableFeatures() or provide a vector of feature names.")
     }
+
+    if (verbose)
+        .cat("Run PCA on the scaled data matrix ...")
     data.use <- GetAssayData(object, "scale.data")
     if (NROW(data.use) == 0L)
         stop("Data has not been scaled. Please run ScaleData and retry.")
 
     # filter (need var > 0)
     if (is.null(features)) features <- VariableFeatures(object)
-    features.keep <- unique(features[features %in% rownames(data.use)])
-    if (length(features.keep) < length(features))
+    f_keep <- unique(features[features %in% rownames(data.use)])
+    if (length(f_keep) < length(features))
     {
-        features.exclude <- setdiff(features, features.keep)
+        f_exclude <- setdiff(features, f_keep)
         if (verbose)
         {
-            warning(paste0("The following ", length(features.exclude),
+            warning(paste0("The following ", length(f_exclude),
                 " features requested have not been scaled ",
                 "(running reduction without them): ",
-                paste0(features.exclude, collapse = ", ")), immediate.=TRUE)
+                paste0(f_exclude, collapse = ", ")), immediate.=TRUE)
         }
     }
-    features <- features.keep
-    features.var <- rowVars(data.use[features, ])
-    features.keep <- features[features.var > 0]
-    if (length(features.keep) < length(features))
+    features <- f_keep
+    f_var <- rowVars(data.use[features, ])
+    f_keep <- features[f_var > 0]
+    if (length(f_keep) < length(features))
     {
-        features.exclude <- setdiff(features, features.keep)
+        f_exclude <- setdiff(features, f_keep)
         if (verbose)
         {
-            warning(paste0("The following ", length(features.exclude),
+            warning(paste0("The following ", length(f_exclude),
                 " features requested have zero variance ",
                 "(running reduction without them): ",
-                paste0(features.exclude, collapse = ", ")), immediate.=TRUE)
+                paste0(f_exclude, collapse = ", ")), immediate.=TRUE)
         }
     }
-    features <- features.keep
-    features <- features[!is.na(x = features)]
+    features <- f_keep
+    features <- features[!is.na(features)]
     data.use <- data.use[features, ]
 
     # run
-    RunPCA(object=data.use,
+    RunPCA(object = data.use,
         assay = assay,
         npcs = npcs,
         rev.pca = rev.pca,
@@ -80,6 +83,11 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE, ...)
 {
     x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
+    if (verbose)
+    {
+        n <- min(dim(object))
+        .cat("Calculating the covariance matrix [", n, "x", n, "] ...")
+    }
 
     # BiocSingular SVD functions (Irlba or Exact algorithm)
     pca_func <- if (isTRUE(approx)) runIrlbaSVD else runExactSVD
@@ -87,7 +95,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     if (!is.null(seed.use)) set.seed(seed.use)
     if (rev.pca)
     {
-        total.variance <- sum(colVars(object))
+        totvar <- sum(colVars(object))
         npcs <- min(npcs, ncol(object)-1L)
         # the input matrix has been centered
         # fold=1 to use covariance matrix
@@ -102,7 +110,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         }
         c_embeddings <- pca_rv$v
     } else {
-        total.variance <- sum(rowVars(object))
+        totvar <- sum(rowVars(object))
         npcs <- min(npcs, nrow(object)-1L)
         # the input matrix has been centered
         # fold=1 to use covariance matrix
@@ -128,7 +136,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         assay = assay,
         stdev = sdev,
         key = reduction.key,
-        misc = list(total.variance=total.variance)
+        misc = list(total.variance = totvar)
     )
     if (verbose)
         print(reduction.data, dims=ndims.print, nfeatures=nfeatures.print)
