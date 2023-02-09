@@ -58,7 +58,7 @@ a <- scNewAssayGDS(fn)
 d <- Seurat::CreateSeuratObject(a)
 
 d <- NormalizeData(d)
-d <- FindVariableFeatures(d, nfeatures=100)
+d <- FindVariableFeatures(d, nfeatures=250)
 d <- ScaleData(d)
 
 d <- RunPCA(d, ndims.print=1:2)
