@@ -167,10 +167,7 @@ suppressPackageStartupMessages({
 })
 
 fn <- "1M_sc_neurons_d100.gds"    # the input GDS file can be for d250, d500, dfull
-x <- SCArray.sat::scNewAssayGDS(fn)
-class(x)    # new "SCArrayAssay"
-
-d <- Seurat::CreateSeuratObject(x)
+d <- scNewSeuratGDS(fn)
 
 d <- NormalizeData(d)
 d <- FindVariableFeatures(d, nfeatures=2000)    # (2000 is the default for nfeatures)
