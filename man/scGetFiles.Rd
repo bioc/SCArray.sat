@@ -32,7 +32,7 @@ scGetFiles(object, ...)
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-a <- scGetAssayGDS(fn)
+a <- scNewAssayGDS(fn)
 d <- Seurat::CreateSeuratObject(a)
 
 scGetFiles(a)

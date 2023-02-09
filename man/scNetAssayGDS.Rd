@@ -1,11 +1,11 @@
-\name{scGetAssayGDS}
-\alias{scGetAssayGDS}
-\title{Get Assay object}
+\name{scNewAssayGDS}
+\alias{scNewAssayGDS}
+\title{Create Assay Object}
 \description{
-    Gets Seurat Assay object.
+    Creates a new Seurat Assay object (SCArrayAssay).
 }
 \usage{
-scGetAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
+scNewAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
     verbose=TRUE)
 }
 \arguments{
@@ -33,7 +33,7 @@ scGetAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
 # raw count data in a GDS file
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-a <- scGetAssayGDS(fn)
+a <- scNewAssayGDS(fn)
 a
 class(a)
 

@@ -72,7 +72,7 @@ scClose(f)    # close the file
 
 
 # Create a SCArrayAssay object from the GDS file
-a <- scGetAssayGDS(fn)
+a <- scNewAssayGDS(fn)
 class(a)    # new "SCArrayAssay", derived from Seurat Assay
 
 # Create a Seurat object with the SCArrayAssay object
@@ -170,7 +170,7 @@ suppressPackageStartupMessages({
 })
 
 fn <- "1M_sc_neurons_n100.gds"
-x <- SCArray.sat::scGetAssayGDS(fn)
+x <- SCArray.sat::scNewAssayGDS(fn)
 class(x)    # new "SCArrayAssay"
 
 d <- Seurat::CreateSeuratObject(x)

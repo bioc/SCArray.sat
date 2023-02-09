@@ -14,7 +14,7 @@ test_sce_matrix <- function()
 	fn <- system.file("extdata", "example.gds", package="SCArray")
 
 	# load Assay
-	x <- scGetAssayGDS(fn)
+	x <- scNewAssayGDS(fn)
 	d1 <- Seurat::CreateSeuratObject(x)  # new DelayedMatrix-based Assay
 	m <- as(GetAssayData(d1, "counts"), "sparseMatrix")
 	d0 <- Seurat::CreateSeuratObject(m)  # regular in-memory Assay
