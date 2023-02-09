@@ -187,12 +187,14 @@ scNewSeuratGDS <- function(gdsfile, assay.name=NULL, key=c(counts="rna_"),
         a <- CreateAssayObject2(counts(sce))
     }
     Key(a) <- unname(Seurat:::UpdateKey(tolower(key["counts"])))
+    # meta information for features
+    if (NCOL(rowData(sce)))
+        a <- AddMetaData(a, as.data.frame(rowData(sce)))
+    # meta information for cells
     meta.data <- NULL
     if (NCOL(colData(sce)))
         meta.data <- as.data.frame(colData(sce))
     object <- CreateSeuratObject(a, meta.data=meta.data)
-    if (NCOL(rowData(sce)))
-        object <- AddMetaData(object, rowData(sce))
     assay.name <- setdiff(assay.name, c("counts", "logcounts"))
 
     # Other assays
