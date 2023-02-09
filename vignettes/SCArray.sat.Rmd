@@ -166,7 +166,7 @@ suppressPackageStartupMessages({
     library(SCArray.sat)
 })
 
-fn <- "1M_sc_neurons_n100.gds"
+fn <- "1M_sc_neurons_d100.gds"    # the input GDS file can be for d250, d500, dfull
 x <- SCArray.sat::scNewAssayGDS(fn)
 class(x)    # new "SCArrayAssay"
 
