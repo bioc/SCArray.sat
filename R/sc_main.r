@@ -64,6 +64,7 @@ x_warn_speed <- function(x, use_row=TRUE, max_bk_num=10L)
 
 #######################################################################
 
+# GDS to SCArrayAssay
 scGetAssayGDS <- function(gdsfile, name="counts", key="rna_", row_data=TRUE,
     check=TRUE, verbose=TRUE)
 {

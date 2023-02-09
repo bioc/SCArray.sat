@@ -11,7 +11,8 @@ scGetAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
 \arguments{
     \item{gdsfile}{a file name for the GDS file, or a \code{SCArrayFileClass}
         object}
-    \item{name}{characters for the name of data matrix in the GDS file}
+    \item{name}{characters for the name of data matrix in the GDS file;
+        if \code{NA_character_}, to use the first assay}
     \item{key}{characters for the Assay key}
     \item{row_data}{if \code{TRUE}, add \code{rowData()} to the feature-level
         meta data of the Seurat Assay}

@@ -77,6 +77,7 @@
 #######################################################################
 
 # Create an SCArrayAssay object from counts or data
+# similar to Seurat::CreateAssayObject, but allows DelayedMatrix
 CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
     check.matrix=FALSE, ...)
 {
@@ -490,6 +491,7 @@ ScaleRegressOut <- function(object, features, vars.to.regress, latent.data,
 }
 
 
+# Export S3 method
 ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     latent.data=NULL, split.by=NULL, model.use='linear', use.umi=FALSE,
     do.scale=TRUE, do.center=TRUE, scale.max=10, block.size=1000,
