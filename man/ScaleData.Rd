@@ -72,8 +72,7 @@ output file name, otherwise returns an in-memory matrix.
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-a <- scNewAssayGDS(fn)
-d <- Seurat::CreateSeuratObject(a)
+d <- scNewSeuratGDS(fn)
 
 d <- NormalizeData(d)
 d <- FindVariableFeatures(d, nfeatures=50)

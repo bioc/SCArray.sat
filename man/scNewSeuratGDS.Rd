@@ -42,11 +42,11 @@ they will be added to the assay list.
 # raw count data in a GDS file
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-a <- scNewAssayGDS(fn)
-a
-class(a)
+d <- scNewSeuratGDS(fn)
+d
+class(d)
 
-rm(a)
+rm(d)
 }
 
 \keyword{GDS}

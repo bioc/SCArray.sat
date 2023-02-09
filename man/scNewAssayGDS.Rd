@@ -37,7 +37,10 @@ a <- scNewAssayGDS(fn)
 a
 class(a)
 
-rm(a)
+d <- Seurat::CreateSeuratObject(a)
+d
+
+rm(a, d)
 }
 
 \keyword{GDS}

@@ -54,8 +54,7 @@ reduce the times of accessing on-disk data.
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-a <- scNewAssayGDS(fn)
-d <- Seurat::CreateSeuratObject(a)
+d <- scNewSeuratGDS(fn)
 
 d <- NormalizeData(d)
 d <- FindVariableFeatures(d, nfeatures=250)

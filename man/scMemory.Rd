@@ -39,8 +39,7 @@ a \code{Assay} object.
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-a <- scNewAssayGDS(fn)
-d1 <- Seurat::CreateSeuratObject(a)
+d1 <- scNewSeuratGDS(fn)
 is(GetAssay(d1))
 
 d2 <- scMemory(d1)

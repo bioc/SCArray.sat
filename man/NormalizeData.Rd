@@ -40,9 +40,8 @@ since the calculation is "delayed" until it is needed.
 \examples{
 fn <- system.file("extdata", "example.gds", package="SCArray")
 
-a <- scNewAssayGDS(fn)
-d <- Seurat::CreateSeuratObject(a)
-
+d <- scNewSeuratGDS(fn)
+d
 d <- NormalizeData(d)
 
 remove(a, d)
