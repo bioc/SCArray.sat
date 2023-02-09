@@ -271,7 +271,7 @@ NormalizeData.SC_GDSMatrix <- function(object,
 
 ####  Methods -- ScaleData()  ####
 
-x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
+.x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
 {
     stopifnot(is.numeric(scale.max), length(scale.max)==1L)
     if (center && scale)
@@ -303,7 +303,7 @@ x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
     }
 }
 
-x_regress_out <- function(x, latent.data=NULL, out_nd=NULL, 
+.x_regress_out <- function(x, latent.data=NULL, out_nd=NULL, 
     model.use=c("linear", "poisson", "negbinom"), verbose=TRUE)
 {
     # check
@@ -366,7 +366,7 @@ x_regress_out <- function(x, latent.data=NULL, out_nd=NULL,
     }
 }
 
-ScaleRegressOut <- function(object, features, vars.to.regress, latent.data,
+.scale_regress_out <- function(object, features, vars.to.regress, latent.data,
     split.cells, use_gds, model.use='linear', use.umi=FALSE, verbose=TRUE)
 {
     # check
@@ -434,7 +434,7 @@ ScaleRegressOut <- function(object, features, vars.to.regress, latent.data,
             out_nd <- add.gdsn(outf, sprintf("residuals.%d", i),
                 storage="double", valdim=c(length(ss), 0L))
         }
-        x_regress_out(
+        .x_regress_out(
             object[, ss, drop=FALSE], latent.data[ss, , drop=FALSE],
             out_nd, model.use, verbose)
     })
@@ -485,7 +485,7 @@ ScaleRegressOut <- function(object, features, vars.to.regress, latent.data,
         object <- log1p(object - m)
     }
 
-    CheckGC()
+    if (is.null(outf)) CheckGC()  # in-memory
     # output
     list(object=object, filename=resid_gdsfn)
 }
@@ -512,7 +512,6 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     if (is.null(split.by)) split.by <- TRUE
     split.cells <- split(colnames(object), split.by)
     object.names <- dimnames(object)
-    CheckGC()
 
     # use DelayedMatrix ?
     resid_gdsfn <- NULL    # temporary file name
@@ -532,7 +531,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 
     if (!is.null(vars.to.regress))
     {
-        v <- ScaleRegressOut(object, features, vars.to.regress,
+        v <- .scale_regress_out(object, features, vars.to.regress,
             latent.data, split.cells, use_gds, model.use, use.umi, verbose)
         object <- v$object
         dimnames(object) <- object.names
@@ -594,7 +593,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
             }
         }
         # center & scale, return a DelayedMatrix
-        m <- x_row_scale(m, do.center, do.scale, scale.max)
+        m <- .x_row_scale(m, do.center, do.scale, scale.max)
         # save
         if (!is.null(out_nd))
         {
@@ -640,13 +639,14 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         unlink(resid_gdsfn, force=TRUE)
     }
 
-    CheckGC()
+    if (is.matrix(scaled.data)) CheckGC()  # in-memory
     return(scaled.data)
 }
 
 
 ####  Methods -- FindVariableFeatures()  ####
 
+# get variance after feature standardization and being clipped to a max
 .row_var_std <- function(x, mu, sd, vmax, verbose=TRUE)
 {
     # check
@@ -671,6 +671,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     v / (ncol(x) - 1L)
 }
 
+# calculate the mean and dispersion for each feature (log-transformed data)
 .mean_disp_exp <- function(x, verbose=TRUE)
 {
     # check
@@ -695,6 +696,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     vr <- (s2 - s1*s1/ncol(x)) / (ncol(x) - 1L)
     cbind(log1p(m), log(vr/m))
 }
+
 
 FindVariableFeatures.SC_GDSMatrix <- function(object,
     selection.method="vst", loess.span=0.3, clip.max="auto",
@@ -736,12 +738,12 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
             hvf[not.const, ], span=loess.span)
         hvf$variance.expected[not.const] <- 10 ^ fit$fitted
 
-        # get variance after feature standardization
         if (verbose)
         {
             .cat("Calculating feature variances ",
                 "of standardized and clipped values")
         }
+        # get variance after feature standardization and being clipped to a max
         hvf$variance.standardized <- .row_var_std(
             object, hvf$mean, sqrt(hvf$variance.expected),
             clip.max, verbose)
