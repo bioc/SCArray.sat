@@ -76,7 +76,7 @@ test_sce_matrix <- function()
 	a0 <- ScaleData(GetAssay(d0), vars.to.regress=c("x1", "x2"), latent.data=dd)
 	m0 <- GetAssayData(a0, "scale.data")
 	m1 <- GetAssayData(a1, "scale.data")
-	checkEquals(m0, as.matrix(m1), "scaled data with regressing out the variables")
+	checkEquals(m0, as.matrix(m1), "scaled data with regressing out covariates")
 
 	# scale with split.by
 	ss <- rep(c(TRUE, FALSE), length.out=ncol(m1))
