@@ -664,7 +664,7 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     # block read
     v <- blockReduce(function(bk, v, mu, inv, vmax, pb)
     {
-        b <- pmin((bk - mu)*inv, vmax)^2L
+        b <- base::pmin((bk - mu)*inv, vmax)^2L
         if (!is.null(pb)) setTxtProgressBar(pb, currentBlockId())
         v + rowSums(b)
     }, x, 0, grid=gd, mu=mu, inv=inv, vmax=vmax, pb=pb)
@@ -708,6 +708,8 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
     # check
     x_msg("Calling FindVariableFeatures.SC_GDSMatrix() ...")
     stopifnot(is.character(selection.method), length(selection.method)==1L)
+    if (is.numeric(clip.max))
+        stopifnot(length(clip.max)==1L, clip.max>0)
     CheckDots(...)
 
     # check mean & dispersion functions
