@@ -30,7 +30,7 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
     if (NROW(data.use) == 0L)
         stop("Data has not been scaled. Please run ScaleData and retry.")
 
-    # filter (need var > 0)
+    # check features
     if (is.null(features)) features <- VariableFeatures(object)
     f_keep <- unique(features[features %in% rownames(data.use)])
     if (length(f_keep) < length(features))
@@ -45,21 +45,6 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
         }
     }
     features <- f_keep
-    f_var <- rowVars(data.use[features, ])
-    f_keep <- features[f_var > 0]
-    if (length(f_keep) < length(features))
-    {
-        f_exclude <- setdiff(features, f_keep)
-        if (verbose)
-        {
-            warning(paste0("The following ", length(f_exclude),
-                " features requested have zero variance ",
-                "(running reduction without them): ",
-                paste0(f_exclude, collapse = ", ")), immediate.=TRUE)
-        }
-    }
-    features <- f_keep
-    features <- features[!is.na(features)]
     data.use <- data.use[features, ]
 
     # run
