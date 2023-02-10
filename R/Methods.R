@@ -655,17 +655,19 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     inv <- 1 / sd
     inv[!is.finite(inv)] <- 0
     gd <- colAutoGrid(x)
+    pb <- NULL
     if (verbose)
+    {
         pb <- txtProgressBar(0L, length(gd), style=3L, width=64L, file=stderr())
+        on.exit(close(pb))
+    }
     # block read
-    v <- blockReduce(function(bk, v, mu, inv, vmax, vb)
+    v <- blockReduce(function(bk, v, mu, inv, vmax, pb)
     {
         b <- pmin((bk - mu)*inv, vmax)^2L
-        if (vb) setTxtProgressBar(pb, currentBlockId())
+        if (!is.null(pb)) setTxtProgressBar(pb, currentBlockId())
         v + rowSums(b)
-    }, x, 0, grid=gd, mu=mu, inv=inv, vmax=vmax, vb=verbose)
-    # finally
-    if (verbose) close(pb)
+    }, x, 0, grid=gd, mu=mu, inv=inv, vmax=vmax, pb=pb)
     # output
     v[!is.finite(v)] <- 0
     v / (ncol(x) - 1L)
@@ -734,14 +736,14 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         hvf$variance.expected <- 0
         hvf$variance.standardized <- 0
         not.const <- hvf$variance > 0
-        fit <- loess(log10(variance) ~ log10(mean),
-            hvf[not.const, ], span=loess.span)
+        fit <- loess(log10(variance) ~ log10(mean), data=hvf[not.const, ],
+            span=loess.span)
         hvf$variance.expected[not.const] <- 10 ^ fit$fitted
 
         if (verbose)
         {
-            .cat("Calculating feature variances ",
-                "of standardized and clipped values")
+            .cat(
+            "Calculating feature variances of standardized and clipped values")
         }
         # get variance after feature standardization and being clipped to a max
         hvf$variance.standardized <- .row_var_std(
