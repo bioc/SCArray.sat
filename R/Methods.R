@@ -662,12 +662,21 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         on.exit(close(pb))
     }
     # block read
-    v <- blockReduce(function(bk, v, mu, inv, vmax, pb)
+    v <- blockReduce(function(bk, v, mu, mu2, inv, vmax, pb)
     {
-        b <- base::pmin((bk - mu)*inv, vmax)^2L
+        if (is(bk, "SparseArraySeed"))
+        {
+            i <- bk@nzindex[, 1L]  # row index
+            bk@nzdata <- pmin((bk@nzdata - mu[i])*inv[i], vmax)^2L - mu2[i]
+            b <- as(bk, "sparseMatrix")
+            v <- v + mu2*ncol(b)
+        } else {
+            b <- pmin((bk - mu)*inv, vmax)^2L
+        }
         if (!is.null(pb)) setTxtProgressBar(pb, currentBlockId())
         v + rowSums(b)
-    }, x, 0, grid=gd, mu=mu, inv=inv, vmax=vmax, pb=pb)
+    }, x, 0, grid=gd, as.sparse=NA, mu=mu, mu2=pmin(-mu*inv, vmax)^2L,
+        inv=inv, vmax=vmax, pb=pb)
     # output
     v[!is.finite(v)] <- 0
     v / (ncol(x) - 1L)
