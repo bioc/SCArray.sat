@@ -74,6 +74,9 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         .cat("Calculating the covariance matrix [", n, "x", n, "] ...")
         oldopt <- options(SCArray.progress.verbose=TRUE)
         on.exit(options(oldopt))
+    } else {
+        oldopt <- options(SCArray.progress.verbose=FALSE)
+        on.exit(options(oldopt))
     }
 
     # BiocSingular SVD functions (Irlba or Exact algorithm)
