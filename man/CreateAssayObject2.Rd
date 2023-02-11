@@ -14,7 +14,8 @@ CreateAssayObject2(counts, data, min.cells=0, min.features=0,
     \item{data}{Prenormalized data (matrix, dgCMatrix or DelayedMatrix)}
     \item{min.cells}{if > 0, a lower cutoff for filtering cells}
     \item{min.features}{if > 0, a lower cutoff for filtering features}
-    \item{check.matrix}{Check counts matrix for NA, NaN, Inf, and non-integer values}
+    \item{check.matrix}{Check counts matrix for NA, NaN, Inf, and non-integer
+        values}
     \item{...}{Arguments passed to \code{\link{as.sparse}} when \code{counts}
         or \code{data} is matrix or dgCMatrix}
 }

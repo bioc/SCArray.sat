@@ -23,10 +23,10 @@ scNewSeuratGDS(gdsfile, assay.name=NULL, key=c(counts="rna_"), row_data=TRUE,
     \item{verbose}{if \code{TRUE}, show information}
 }
 \details{
-    \code{"counts"} must be in the input GDS file and it is used as the raw count data in
-the active Seurat assay. If \code{"logcounts"} exists, it is used as normalized data
-associated with \code{"counts"}. If there are other data matrices in the GDS file,
-they will be added to the assay list.
+    \code{"counts"} must be in the input GDS file and it is used as the raw
+count data in the active Seurat assay. If \code{"logcounts"} exists, it is
+used as normalized data associated with \code{"counts"}. If there are other
+data matrices in the GDS file, they will be added to the assay list.
 }
 \value{
     Return an instance of \code{\link{Seurat}}.
