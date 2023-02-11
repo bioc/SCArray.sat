@@ -82,7 +82,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     # BiocSingular SVD functions (Irlba or Exact algorithm)
     pca_func <- if (isTRUE(approx)) runIrlbaSVD else runExactSVD
 
-    if (!is.null(seed.use)) set.seed(seed.use)
+    # if (!is.null(seed.use)) set.seed(seed.use)
     if (rev.pca)
     {
         totvar <- sum(colVars(object))
