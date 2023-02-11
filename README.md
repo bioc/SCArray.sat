@@ -26,7 +26,7 @@ Package News: [NEWS](./NEWS)
 
 ## Installation
 
-* Requires [SCArray](http://www.bioconductor.org/packages/SCArray/) (≥ v1.7.5), [SeuratObject](https://cran.r-project.org/package=SeuratObject) (≥ v4.0), [Seurat](https://cran.r-project.org/package=Seurat) (≥ v4.0)
+* Requires [SCArray](http://www.bioconductor.org/packages/SCArray/) (≥ v1.7.8), [SeuratObject](https://cran.r-project.org/package=SeuratObject) (≥ v4.0), [Seurat](https://cran.r-project.org/package=Seurat) (≥ v4.0)
 
 * Bioconductor repository
 ```R
