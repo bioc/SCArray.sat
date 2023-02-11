@@ -24,5 +24,4 @@ Description: Extends the Seurat classes and functions to support GDS files as
 License: GPL-3
 VignetteBuilder: knitr
 ByteCompile: TRUE
-URL: https://github.com/AbbVie-ComputationalGenomics/SCArray.sat
 biocViews: DataRepresentation, DataImport, SingleCell, RNASeq
