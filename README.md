@@ -48,25 +48,32 @@ suppressPackageStartupMessages({
 fn <- system.file("extdata", "example.gds", package="SCArray")
 fn
 
-a <- scGetAssayGDS(fn)
-class(a)          # new "SCArrayAssay"
-is(a, "Assay")    # TRUE
-
-# create a Seurat object with the SCArrayAssay object
-d <- CreateSeuratObject(a)
+# create a Seurat object from the GDS file
+d <- scNewSeuratGDS(fn)
+class(GetAssay(d))    # SCArrayAssay, derived from Assay
 
 d <- NormalizeData(d)
-d <- FindVariableFeatures(d, nfeatures=500)
+d <- FindVariableFeatures(d)
 d <- ScaleData(d)
 
+set.seed(42)
 d <- RunPCA(d)
 DimPlot(d, reduction="pca")
+
+set.seed(42)
+d <- RunUMAP(d, dims=1:50)    # use all PCs calculated by RunPCA()
+DimPlot(d, reduction="umap")
+
+saveRDS(d, "work.rds")    # save the Seurat object without raw count data
+
 
 # check the internal data matrices
 GetAssayData(d, "counts")        # SC_GDSMatrix
 path(GetAssayData(d, "counts"))  # the file name of count data
 GetAssayData(d, "data")          # SC_GDSMatrix
 GetAssayData(d, "scale.data")    # SC_GDSMatrix
+
+scGetFiles(d)    # the GDS file used in the Seurat object
 ```
 
 

@@ -1,0 +1,9 @@
+citHeader("To cite SCArray.sat in publications use:")
+
+citEntry(entry="Misc",
+    title = "Large-scale single-cell RNA-seq data analysis using GDS files and Seurat",
+    author = personList(person("Xiuwen", "Zheng")),
+    year = "2023",
+    url = "http://www.bioconductor.org/packages/SCArray.sat",
+    textVersion = "Zheng X (2023). Large-scale single-cell RNA-seq data analysis using GDS files and Seurat."
+)

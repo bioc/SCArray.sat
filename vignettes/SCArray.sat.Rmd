@@ -3,10 +3,9 @@ title: "Large-scale single-cell RNA-seq data analysis using GDS files and Seurat
 author: "Dr. Xiuwen Zheng (Genomics Research Center, AbbVie)"
 date: "Feb 2023"
 output:
-    html_document:
-        theme: default
-        highlight: tango
-        toc: yes
+    BiocStyle::html_document:
+        toc_float: true
+    BiocStyle::pdf_document: default
 vignette: >
     %\VignetteIndexEntry{scRNA-seq data analysis with GDS files and Seurat}
     %\VignetteKeywords{scRNAseq, GDS, Seurat}
@@ -14,11 +13,12 @@ vignette: >
     %\VignetteEncoding{UTF-8}
 ---
 
-```{r echo=FALSE}
-options(width=110)
+```{r style, echo=FALSE, results='asis'}
+BiocStyle::markdown()
 ```
 
-## Introduction
+
+# Introduction
 
 Seurat is one of the most popular R packages for quality control, analysis, and exploration of single cell RNA sequencing data. However, its scalability is limited by the available memory. The SCArray.sat package extends the [Seurat](https://cran.r-project.org/package=Seurat) classes and functions to support [GDS files](http://www.bioconductor.org/packages/gdsfmt) as a DelayedArray backend for data representation. It introduces a new `SCArrayAssay` class (derived from the Seurat `Assay`), which wraps raw counts, normalized expressions and scaled data matrix based on [DelayedMatrix](http://www.bioconductor.org/packages/DelayedArray). It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide common data analysis, with the optimized algorithms for GDS data files.
 
@@ -51,9 +51,23 @@ The SCArray.sat package takes advantage of the S3 object-oriented methods define
 
 ~
 
-## Examples
+# Installation
 
-### 1. Small Datasets
+* Requires [SCArray](http://www.bioconductor.org/packages/SCArray/) (≥ v1.7.8), [SeuratObject](https://cran.r-project.org/package=SeuratObject) (≥ v4.0), [Seurat](https://cran.r-project.org/package=Seurat) (≥ v4.0)
+
+* Bioconductor repository
+
+To install this package, start R and enter:
+```{r, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("SCArray.sat")
+```
+
+
+# Examples
+
+## Small Datasets
 
 ```{r}
 # Load the packages
@@ -100,17 +114,19 @@ GetAssayData(d, "scale.data")
 ```
 
 **Perform PCA and UMAP:**
-```{r fig.align="center",fig.width=5,fig.height=3}
+```{r fig.wide=TRUE}
+set.seed(42)
 d <- RunPCA(d, ndims.print=1:2)
 DimPlot(d, reduction="pca")
 
+set.seed(42)
 d <- RunUMAP(d, dims=1:50)    # use all PCs calculated by RunPCA()
 DimPlot(d, reduction="umap")
 ```
 
 ~
 
-### 2. Large Datasets
+## Large Datasets
 
 Let's download a large single-cell RNA-seq dataset from Bioconductor, and convert it to a GDS file. This step will take a while.
 
@@ -140,9 +156,36 @@ After the file conversion, users can use this GDS file with Seurat to analyze th
 
 ~
 
-## Benchmarks
+# Benchmarks
 
-### 1. Test Datasets
+## Test Datasets
+
+The datasets used in the benchmark (Table 2) were generated from the 1.3 million brain cells, with the following R codes:
+```R
+library(SCArray)
+library(SCArray.sat)
+
+sce <- scExperiment("1M_sc_neurons.gds")  # load the full 1.3M cells
+
+# D100 dataset
+scConvGDS(sce[, 1:1e5], "1M_sc_neurons_d100.gds")  # save to a GDS
+# in-memory Seurat object
+obj <- scMemory(scNewSeuratGDS("1M_sc_neurons_d100.gds"))
+saveRDS(obj, "1M_sc_neurons_d100_seuratobj.rds")  # save to a RDS
+
+# D250 dataset
+scConvGDS(sce[, 1:2.5e5], "1M_sc_neurons_d250.gds")
+obj <- scMemory(scNewSeuratGDS("1M_sc_neurons_d250.gds"))
+saveRDS(obj, "1M_sc_neurons_d250_seuratobj.rds")
+
+# D500 dataset
+scConvGDS(sce[, 1:5e5], "1M_sc_neurons_d500.gds")
+obj <- scMemory(scNewSeuratGDS("1M_sc_neurons_d500.gds"))
+saveRDS(obj, "1M_sc_neurons_d500_seuratobj.rds")
+
+# Dfull dataset
+scConvGDS(sce, "1M_sc_neurons_dfull.gds")
+```
 
 **Table 2: Datasets in the benchmarks.**
 
@@ -157,7 +200,7 @@ After the file conversion, users can use this GDS file with Seurat to analyze th
 
 ~
 
-### 2. R Codes in the Benchmark
+## R Codes in the Benchmark
 
 The following R script is used in the benchmark for testing GDS files, and the R codes for testing the Seurat Object are similar except the input file.
 ```R
@@ -173,7 +216,9 @@ d <- NormalizeData(d)
 d <- FindVariableFeatures(d, nfeatures=2000)    # (2000 is the default for nfeatures)
 d <- ScaleData(d)
 
+set.seed(42)
 d <- RunPCA(d)
+set.seed(42)
 d <- RunUMAP(d, dims=1:50)
 
 saveRDS(d, "d100.rds")    # or d250.rds, d500.rds, dfull.rds
@@ -183,37 +228,40 @@ q('no')
 
 ~
 
-### 3. Memory Usage and Elapsed Time
+## Memory Usage and Elapsed Time
 
 With large test datasets, the SCArray.sat package significantly reduces the memory usages compared with the Seurat package, while the in-memory implementation in Seurat is only 2 times faster than SCArray.sat. When the full dataset "Dfull" was tested, Seurat failed to load the data since the number of non-zeros is out of the limit of sparse matrix.
 
-![**Figure 2**: The benchmark on PCA & UMAP with large datasets.](benchmark.svg)
+![**Figure 2**: The benchmark on PCA & UMAP with large datasets (CPU: Intel Xeon Gold 6248 @2.50GHz, RAM: 176GB).](benchmark.svg)
 
 ~
 
 ~
 
-## Miscellaneous
+# Miscellaneous
 
-### Save SCArrayAssay
+## Save SCArrayAssay
 
 The Seurat object with `SCArrayAssay` can be directly saved to a RDS (R object) file, in which the raw counts in the GDS file is not stored in the RDS file. This can avoid data duplication, and is helpful for faster meta data loading. Please keep the GDS and RDS files in the same directory or the same relative paths. The R object can be reloaded later in another R session, and GDS files are reopened internally when accessing the count data.
 
 ```{r}
 d    # the example for the small dataset
-saveRDS(d, "test.rds")  # save to a RDS file
+
+save_fn <- tempfile(fileext=".rds")  # or specify an appropriate location
+save_fn
+saveRDS(d, save_fn)  # save to a RDS file
 
 remove(d)  # delete the variable d
 gc()       # trigger a garbage collection
 
-d <- readRDS("test.rds")  # load from a RDS file
+d <- readRDS(save_fn)  # load from a RDS file
 d
 GetAssayData(d, "counts")  # reopens the GDS file automatically
 ```
 
 ~
 
-### Downgrade SCArrayAssay
+## Downgrade SCArrayAssay
 
 The `SCArrayAssay` object can be downgraded to the regular `Assay`. It is useful when the downstream functions or packages do not support DelayedArray. 
 
@@ -234,7 +282,7 @@ is(GetAssayData(new_d, "scale.data"))  # in-memory matrix
 
 ~
 
-### Conversion from Seurat to SingleCellExperiment
+## Conversion from Seurat to SingleCellExperiment
 
 A Seurat object with `SCArrayAssay` can be converted to a Bioconductor `SingleCellExperiment` object using `as.SingleCellExperiment()` in the Seurat package. The DelayedMatrix in `SCArrayAssay will be saved in the new SingleCellExperiment object. For example,
 
@@ -250,7 +298,41 @@ counts(sce)  # raw counts
 
 ~
 
-### Debugging
+## List of supported functions
+
+Not all of the functions in the Seurat package can be applied to the `SCArrayAssay` object. Here is the list of currently supported and unsupported functions we have tested. The unsupported methods maybe available on request in the future release of SCArray.sat. Note that the supported states may depend on the package versions of Seurat and SeuratObject, and SeuratObject_4.1.3 and Seurat_4.3.0 were tested here.
+
+**Table 3: The states of functions and methods with the support of SCArrayAssay.**
+
+|State| Functions             | Notes        |
+|:---:|:----------------------|:-------------|
+| ✓   |CreateSeuratObject()   |  |
+| ✓   |FindVariableFeatures() |  |
+| ✓   |NormalizeData()        |  |
+| ✓   |RunPCA()               |  |
+| ✓   |ScaleData()            |  |
+| ☑   |FindMarkers()          |  |
+| ☑   |HVFInfo()              |  |
+| ☑   |RunUMAP()              |  |
+| ☑   |RunTSNE()              |  |
+| ☑   |RunSPCA()              |  |
+| ☑   |ProjectDIM()           |  |
+| ☑   |ProjectUMAP()          |  |
+| ☑   |SVFInfo()              |  |
+| ☑   |VariableFeatures()     |  |
+| ✗   |CreateAssayObject()    | use CreateAssayObject2() instead |
+| ✗   |as.Seurat()            |  |
+| ✗   |RunICA()               |  |
+| ✗   |SCTransform()          |  |
+
+* ✓ Supported (implemented in SCArray.sat)
+* ☑ Supported with the implementation in Seurat
+* ✗ Unsupported (raising an error)
+
+
+~
+
+## Debugging
 
 `options(SCArray.verbose=TRUE)` is used to enable displaying debug information when calling the functions in the SCArray and SCArray.sat packages. For example,
 
@@ -264,7 +346,7 @@ d <- ScaleData(d)
 
 ~
 
-## Session Information
+# Session Information
 
 ```{r}
 # print version information about R, the OS and attached or loaded packages
