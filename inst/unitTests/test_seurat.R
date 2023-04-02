@@ -94,7 +94,6 @@ test_sce_matrix <- function()
 	checkEquals(m0, as.matrix(m1), "scaled data")
 
 	# runPCA
-	set.seed(42)
 	d1 <- RunPCA(d1, verbose=FALSE)
 	d0 <- RunPCA(d0, verbose=FALSE)
 	m0 <- Embeddings(d0[["pca"]])

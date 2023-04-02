@@ -15,17 +15,21 @@ vignette: >
 
 ```{r style, echo=FALSE, results='asis'}
 BiocStyle::markdown()
+knitr::opts_chunk$set(warning=FALSE, error=FALSE, message=FALSE)
 ```
 
 
 # Introduction
 
-Seurat is one of the most popular R packages for quality control, analysis, and exploration of single cell RNA sequencing data. However, its scalability is limited by the available memory. The SCArray.sat package extends the [Seurat](https://cran.r-project.org/package=Seurat) classes and functions to support [GDS files](http://www.bioconductor.org/packages/gdsfmt) as a DelayedArray backend for data representation. It introduces a new `SCArrayAssay` class (derived from the Seurat `Assay`), which wraps raw counts, normalized expressions and scaled data matrix based on [DelayedMatrix](http://www.bioconductor.org/packages/DelayedArray). It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide common data analysis, with the optimized algorithms for GDS data files.
+Single-cell RNA sequencing (scRNA-seq) has revolutionized our understanding of gene expression heterogeneity within complex biological systems. As scRNA-seq technology becomes increasingly accessible and cost-effective, experiments are generating data from larger and larger numbers of cells. However, the analysis of large scRNA-seq data remains a challenge, particularly in terms of scalability. While numerous analysis tools have been developed to tackle the complexities of scRNA-seq data, their scalability is often limited, posing a major bottleneck in the analysis of large-scale experiments. In particular, the R package [Seurat](https://cran.r-project.org/package=Seurat) is one of the most widely used tools for exploring and analyzing scRNA-seq data, but its scalability is often limited by available memory.
 
+To address this issue, we introduce a new R package called “SCArray.sat” that extends the Seurat classes and functions to support Genomic Data Structure ([GDS](http://www.bioconductor.org/packages/gdsfmt)) files as a [DelayedArray](http://www.bioconductor.org/packages/DelayedArray) backend for data representation. GDS files store multiple dense and sparse array-based data sets in a hierarchical structure. This package defines a new class, called “SCArrayAssay” (derived from the Seurat class “Assay”), which wraps raw counts, normalized expressions, and scaled data matrices based on GDS-specific DelayedMatrix. It is designed to integrate seamlessly with the Seurat package to provide common data analysis in a workflow, with optimized algorithms for GDS data files.
 
 ~
 
-![**Figure 1**: Overview of the SCArray framework.](scarray_sat.svg)
+```{r workflow, echo=FALSE, fig.cap="Overview of the SCArray framework.", fig.wide=TRUE}
+knitr::include_graphics("scarray_sat.svg")
+```
 
 ~
 
@@ -40,6 +44,8 @@ The SCArray.sat package takes advantage of the S3 object-oriented methods define
 
 | **Methods**               | **Description**           | **Note**                   |
 |:--------------------------|:--------------------------|:---------------------------|
+|GetAssayData.SCArrayAssay()         |Accessor function for ‘SCArrayAssay’ objects  |    |
+|SetAssayData.SCArrayAssay           |Setter functions for ‘Assay’ objects          |    |
 |NormalizeData.SC_GDSMatrix()        |Normalize raw count data | Store a DelayedMatrix  |
 |ScaleData.SC_GDSMatrix()            |Scale and center the normalized data |    |
 |FindVariableFeatures.SC_GDSMatrix() |Identifies features |     |
@@ -53,7 +59,7 @@ The SCArray.sat package takes advantage of the S3 object-oriented methods define
 
 # Installation
 
-* Requires [SCArray](http://www.bioconductor.org/packages/SCArray/) (≥ v1.7.8), [SeuratObject](https://cran.r-project.org/package=SeuratObject) (≥ v4.0), [Seurat](https://cran.r-project.org/package=Seurat) (≥ v4.0)
+* Requires [SCArray](http://www.bioconductor.org/packages/SCArray/) (≥ v1.7.13), [SeuratObject](https://cran.r-project.org/package=SeuratObject) (≥ v4.0), [Seurat](https://cran.r-project.org/package=Seurat) (≥ v4.0)
 
 * Bioconductor repository
 
@@ -115,11 +121,9 @@ GetAssayData(d, "scale.data")
 
 **Perform PCA and UMAP:**
 ```{r fig.wide=TRUE}
-set.seed(42)
 d <- RunPCA(d, ndims.print=1:2)
 DimPlot(d, reduction="pca")
 
-set.seed(42)
 d <- RunUMAP(d, dims=1:50)    # use all PCs calculated by RunPCA()
 DimPlot(d, reduction="umap")
 ```
@@ -209,16 +213,15 @@ suppressPackageStartupMessages({
     library(SCArray.sat)
 })
 
-fn <- "1M_sc_neurons_d100.gds"    # the input GDS file can be for d250, d500, dfull
+# the input GDS file can be for d250, d500, dfull
+fn <- "1M_sc_neurons_d100.gds"
 d <- scNewSeuratGDS(fn)
 
 d <- NormalizeData(d)
-d <- FindVariableFeatures(d, nfeatures=2000)    # (2000 is the default for nfeatures)
+d <- FindVariableFeatures(d, nfeatures=2000)  # using the default
 d <- ScaleData(d)
 
-set.seed(42)
 d <- RunPCA(d)
-set.seed(42)
 d <- RunUMAP(d, dims=1:50)
 
 saveRDS(d, "d100.rds")    # or d250.rds, d500.rds, dfull.rds
@@ -232,7 +235,9 @@ q('no')
 
 With large test datasets, the SCArray.sat package significantly reduces the memory usages compared with the Seurat package, while the in-memory implementation in Seurat is only 2 times faster than SCArray.sat. When the full dataset "Dfull" was tested, Seurat failed to load the data since the number of non-zeros is out of the limit of sparse matrix.
 
-![**Figure 2**: The benchmark on PCA & UMAP with large datasets (CPU: Intel Xeon Gold 6248 @2.50GHz, RAM: 176GB).](benchmark.svg)
+```{r benchmark, echo=FALSE, fig.cap="The benchmark on PCA & UMAP with large datasets (CPU: Intel Xeon Gold 6248 @2.50GHz, RAM: 176GB).", fig.wide=TRUE}
+knitr::include_graphics("benchmark.svg")
+```
 
 ~
 
@@ -261,7 +266,26 @@ GetAssayData(d, "counts")  # reopens the GDS file automatically
 
 ~
 
-## Downgrade SCArrayAssay
+### Multicore or Multi-process Implementation
+
+The multicore and multi-process features are supported by SCArray and SCArray.sat via the Bioconductor package "BiocParallel". To enable the parallel feature, users can use the function `setAutoBPPARAM()` in the DelayedArray package to setup multi-process workers. For examples,
+```R
+library(BiocParallel)
+
+DelayedArray::setAutoBPPARAM(MulticoreParam(4))  # 4 child processes
+```
+
+The Seurat package utilizes the "future" package to perform parallel calculations. To enable multi-threading in `RunUMAP()`, users should also set a "plan" for parallel processing, since Seurat uses `nbrOfWorkers()` to determine the number of threads internally. E.g.,
+```R
+library(future)
+
+plan(multicore, workers=4)  # 4 cores
+message("Number of parallel workers: ", nbrOfWorkers())
+```
+
+~
+
+### Downgrade SCArrayAssay
 
 The `SCArrayAssay` object can be downgraded to the regular `Assay`. It is useful when the downstream functions or packages do not support DelayedArray. 
 

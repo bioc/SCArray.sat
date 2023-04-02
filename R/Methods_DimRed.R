@@ -65,7 +65,8 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
 
 RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
     weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
-    nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE, ...)
+    nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE,
+    BPPARAM, ...)
 {
     x_check(object, "Calling RunPCA.SC_GDSMatrix() with %s ...")
     if (verbose)
@@ -78,11 +79,15 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         oldopt <- options(SCArray.progress.verbose=FALSE)
         on.exit(options(oldopt))
     }
+    if (missing(BPPARAM)) BPPARAM <- getAutoBPPARAM()
+    if (is.null(BPPARAM)) BPPARAM <- SerialParam()
+    if (!is(BPPARAM, "BiocParallelParam"))
+        stop("'BPPARAM' should be NULL or a BiocParallelParam object.")
 
     # BiocSingular SVD functions (Irlba or Exact algorithm)
     pca_func <- if (isTRUE(approx)) runIrlbaSVD else runExactSVD
 
-    # if (!is.null(seed.use)) set.seed(seed.use)
+    if (!is.null(seed.use)) set.seed(seed.use)
     if (rev.pca)
     {
         totvar <- sum(colVars(object))
@@ -90,7 +95,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         # the input matrix has been centered
         # fold=1 to use covariance matrix
         pca_rv <- pca_func(object, k=npcs, center=FALSE, scale=FALSE,
-            deferred=FALSE, fold=1)
+            deferred=FALSE, fold=1, BPPARAM=BPPARAM)
         sdev <- pca_rv$d / sqrt(max(1L, nrow(object)-1L))
         if (weight.by.var)
         {
@@ -105,7 +110,7 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
         # the input matrix has been centered
         # fold=1 to use covariance matrix
         pca_rv <- pca_func(t(object), k=npcs, center=FALSE, scale=FALSE,
-            deferred=FALSE, fold=1)
+            deferred=FALSE, fold=1, BPPARAM=BPPARAM)
         f_loadings <- pca_rv$v
         sdev <- pca_rv$d / sqrt(max(1L, ncol(object)-1L))
         if (weight.by.var)

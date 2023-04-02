@@ -35,17 +35,20 @@ x_append_gdsn <- function(mat, gdsn, verbose=TRUE)
 {
     stopifnot(is(mat, "DelayedMatrix"))
     stopifnot(is(gdsn, "gdsn.class"))
+    pb <- NULL
     if (verbose)
+    {
         pb <- txtProgressBar(0L, ncol(mat), style=3L, width=64L, file=stderr())
+        on.exit(close(pb))
+    }
     # block write
-    blockReduce(function(bk, i, gdsn)
+    blockReduce(function(bk, i, gdsn, pb)
     {
         append.gdsn(gdsn, bk)
-        if (verbose) setTxtProgressBar(pb, i+ncol(bk))
+        if (!is.null(pb)) setTxtProgressBar(pb, i+ncol(bk))
         i + ncol(bk)
-    }, mat, init=0L, grid=colAutoGrid(mat), gdsn=gdsn)
-    # finally
-    if (verbose) close(pb)
+    }, mat, init=0L, grid=colAutoGrid(mat), gdsn=gdsn, pb=pb)
+    # return
     invisible()
 }
 

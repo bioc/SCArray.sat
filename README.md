@@ -7,7 +7,7 @@ Large-scale single-cell RNA-seq data analysis using GDS files and Seurat
 
 ## Features
 
-The package extends the [Seurat](https://cran.r-project.org/web/packages/Seurat/index.html) classes and functions to support GDS files as a DelayedArray backend for data representation. It introduces a new `SCArrayAssay` class (derived from the Seurat `Assay`), which wraps raw counts, normalized expressions and scaled data matrix based on DelayedMatrix. It is designed to integrate seamlessly with the SeuratObject and Seurat packages to provide common data analysis, with the optimized algorithms for GDS data files. Compared with Seurat, SCArray.sat significantly reduces the memory usage and can be applied to very large datasets.
+The package extends the [Seurat](https://cran.r-project.org/web/packages/Seurat/index.html) classes and functions to support Genomic Data Structure ([GDS](http://www.bioconductor.org/packages/gdsfmt)) files as a DelayedArray backend for data representation. It relies on the implementation of GDS-based DelayedMatrix in the [SCArray](http://www.bioconductor.org/packages/SCArray) package to represent single cell RNA-seq data. The common optimized algorithms leveraging GDS-based and single cell-specific DelayedMatrix (SC_GDSMatrix) are implemented in the SCArray package. This package introduces a new SCArrayAssay class (derived from the Seurat Assay), which wraps raw counts, normalized expressions and scaled data matrix based on GDS-specific DelayedMatrix. It is designed to integrate seamlessly with the Seurat package to provide common data analysis in the SeuratObject-based workflow. Compared with Seurat, SCArray.sat significantly reduces the memory usage and can be applied to very large datasets.
 
 ![**Figure 1**: Overview of the SCArray framework.](vignettes/scarray_sat.svg)
 
@@ -26,7 +26,7 @@ Package News: [NEWS](./NEWS)
 
 ## Installation
 
-* Requires [SCArray](http://www.bioconductor.org/packages/SCArray/) (≥ v1.7.8), [SeuratObject](https://cran.r-project.org/package=SeuratObject) (≥ v4.0), [Seurat](https://cran.r-project.org/package=Seurat) (≥ v4.0)
+* Requires [SCArray](http://www.bioconductor.org/packages/SCArray/) (≥ v1.7.13), [SeuratObject](https://cran.r-project.org/package=SeuratObject) (≥ v4.0), [Seurat](https://cran.r-project.org/package=Seurat) (≥ v4.0)
 
 * Bioconductor repository
 ```R
@@ -56,11 +56,9 @@ d <- NormalizeData(d)
 d <- FindVariableFeatures(d)
 d <- ScaleData(d)
 
-set.seed(42)
 d <- RunPCA(d)
 DimPlot(d, reduction="pca")
 
-set.seed(42)
 d <- RunUMAP(d, dims=1:50)    # use all PCs calculated by RunPCA()
 DimPlot(d, reduction="umap")
 
@@ -81,4 +79,3 @@ scGetFiles(d)    # the GDS file used in the Seurat object
 
 * [SCArray](http://www.bioconductor.org/packages/SCArray): Large-scale single-cell RNA-seq data manipulation with GDS files
 * [Seurat](https://cran.r-project.org/package=Seurat): A toolkit for quality control, analysis, and exploration of single cell RNA sequencing data.
-

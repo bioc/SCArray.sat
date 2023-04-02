@@ -15,7 +15,8 @@
     nfeatures.print=30, reduction.key="PC_", seed.use=42, ...)
 \method{RunPCA}{SC_GDSMatrix}(object, assay=NULL, npcs=50, rev.pca=FALSE,
     weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
-    nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE, ...)
+    nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE,
+    BPPARAM, ...)
 }
 
 \arguments{
@@ -35,6 +36,9 @@
     \item{reduction.key}{dimensional reduction key}
     \item{seed.use}{a random seed; or NULL for not setting a seed internally}
     \item{approx}{if \code{TRUE}, use IrlbaSVD; otherwise use ExactSVD}
+    \item{BPPARAM}{NULL for non-parallel execution, or a
+        \code{BiocParallelParam} object for parallelization; if it is missing,
+        \code{getAutoBPPARAM()} will be used}
     \item{...}{additional arguments passed to specific methods}
 }
 \details{
@@ -48,7 +52,8 @@ reduce the times of accessing on-disk data.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link[Seurat]{RunPCA}}, \code{\link{CreateDimReducObject}}
+    \code{\link[Seurat]{RunPCA}}, \code{\link{CreateDimReducObject}},
+    \code{\link{BiocParallelParam}}, \code{\link{getAutoBPPARAM}}
 }
 
 \examples{

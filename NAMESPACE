@@ -29,14 +29,13 @@ S3method(CheckMatrix, SC_GDSMatrix)
 
 import(methods)
 import(S4Vectors)
-importFrom(DelayedArray,
-    blockReduce, colAutoGrid, currentViewport, sweep)
 importFrom(gdsfmt,
-    add.gdsn, append.gdsn, closefn.gds, createfn.gds, openfn.gds)
+    add.gdsn, append.gdsn, closefn.gds, createfn.gds, openfn.gds, index.gdsn)
 importFrom(utils,
     capture.output, packageVersion, txtProgressBar, setTxtProgressBar)
 importFrom(stats, loess, quantile, as.formula, glm, lm, residuals)
 importFrom(BiocGenerics, counts, path)
+importFrom(BiocParallel, SerialParam, bplapply)
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 importFrom(SummarizedExperiment, assays, colData, rowData)
 
@@ -52,9 +51,11 @@ importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
 # Import the classes and methods in DelayedArray & SCArray
 importClassesFrom(DelayedArray, DelayedArray, DelayedMatrix)
 importFrom(DelayedArray,
-    DelayedArray, blockApply, currentBlockId, rowAutoGrid, colAutoGrid)
+    DelayedArray, blockApply, blockReduce, currentBlockId, currentViewport,
+    colAutoGrid, rowAutoGrid, getAutoBPPARAM, sweep)
 importClassesFrom(SCArray, SCArrayFileClass, SC_GDSArray, SC_GDSMatrix)
 importFrom(SCArray,
     scArray, scExperiment, scObj, scSetMax, scRowMeanVar, scGetFiles, scMemory,
-    colSums, colVars, rowSums, rowMeans, rowVars, rowSds, rowMins)
+    scRowAutoGrid, scNumSplit,
+    colSums, colVars, rowSums, rowMeans, rowVars, rowSds, rowMins, pmin2)
 

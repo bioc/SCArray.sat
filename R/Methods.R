@@ -271,6 +271,7 @@ NormalizeData.SC_GDSMatrix <- function(object,
 
 ####  Methods -- ScaleData()  ####
 
+# scale matrix with row mean and standard variance
 .x_row_scale <- function(x, center=TRUE, scale=TRUE, scale.max=10)
 {
     stopifnot(is.numeric(scale.max), length(scale.max)==1L)
@@ -294,82 +295,133 @@ NormalizeData.SC_GDSMatrix <- function(object,
         }
     }
     # set a bound and output
-    if (is(x, "SC_GDSArray"))
-    {
-        scSetMax(x, scale.max)
-    } else {
-        x[x > scale.max] <- scale.max
-        x
-    }
+    if (is.finite(scale.max)) x <- pmin2(x, scale.max)
+    x
 }
 
-.x_regress_out <- function(x, latent.data=NULL, out_nd=NULL, 
-    model.use=c("linear", "poisson", "negbinom"), verbose=TRUE)
+# used in .x_regress_out()
+.x_regress_out_block <- function(x, latent.data, model.use, out_nd, linear_qr,
+    pb_out)
 {
-    # check
-    model.use <- match.arg(model.use)
-    if (is.null(latent.data)) return(x)
-    if (nrow(latent.data) != ncol(x))
-        stop("Uneven number of cells between latent data and expression data.")
     # initialize
     vars.to.regress <- colnames(latent.data)
-    fm <- as.formula(paste("GENE ~", paste(vars.to.regress, collapse="+")))
-    if (model.use == "linear")
+    fm <- as.formula(paste("GENE ~", paste(vars.to.regress, collapse=" + ")))
+    # using ArbitraryArrayGrid
+    gd <- scRowAutoGrid(x)
+    # verbose
+    pb <- NULL
+    if (!is.null(pb_out))
     {
-        mat <- cbind(latent.data, x[1L, ])
-        colnames(mat) <- c(colnames(latent.data), "GENE")
-        qr <- lm(fm, mat, qr=TRUE)$qr
+        stopifnot(is.character(pb_out), length(pb_out)==1L)
+        if (pb_out == "")
+        {
+            pb_out <- stderr()
+        } else {
+            pb_out <- file(pb_out, "wt")
+            on.exit(close(pb_out))
+        }
+        pb <- txtProgressBar(0L, nrow(x), style=3L, width=64L, file=pb_out)
+        on.exit(close(pb), add=TRUE, after=FALSE)
     }
-
-    gd <- rowAutoGrid(x)
-    if (verbose)
-        pb <- txtProgressBar(0L, length(gd), style=3L, width=64L, file=stderr())
-    lst <- blockApply(x, function(bk)
+    # block processing
+    blockReduce(function(bk, v, pb)
     {
         if (is(bk, "SparseArraySeed"))
             bk <- as(bk, "sparseMatrix")
-        ans <- NULL
-        if (is.null(out_nd))
-            ans <- matrix(0, nrow=nrow(bk), ncol=ncol(bk))
-        for (i in seq_len(nrow(bk)))
+        if (model.use == "linear")
         {
-            xx <- bk[i, ]
-            mat <- cbind(latent.data, xx)
-            colnames(mat) <- c(vars.to.regress, "GENE")
-            res <- switch(model.use,
-                linear = qr.resid(qr, xx),
-                poisson = residuals(glm(fm, "poisson", mat), type="pearson"),
-                negbinom = Seurat:::NBResiduals(fm, mat, rownames(x)[i])
-            )
-            # set
-            if (is.null(out_nd))
+            for (i in seq_len(nrow(bk)))
             {
-                ans[i, ] <- res
-            } else {
-                append.gdsn(out_nd, res)
+                res <- qr.resid(linear_qr, bk[i, ])
+                append.gdsn(out_nd, res)  # write
+            }
+        } else {
+            for (i in seq_len(nrow(bk)))
+            {
+                xx <- bk[i, ]
+                mat <- cbind(latent.data, xx)
+                colnames(mat) <- c(vars.to.regress, "GENE")
+                res <- switch(model.use,
+                    linear = qr.resid(linear_qr, xx),
+                    poisson = residuals(glm(fm, "poisson", mat), type="pearson"),
+                    negbinom = Seurat:::NBResiduals(fm, mat, rownames(x)[i])
+                )
+                append.gdsn(out_nd, res) # write
             }
         }
+        if (!is.null(pb)) setTxtProgressBar(pb, v+nrow(bk))
+        v + nrow(bk)
+    }, x, init=0L, grid=gd, as.sparse=NA, pb=pb)
+    invisible()
+}
+
+.x_regress_out <- function(x, latent.data, out_nd, 
+    model.use=c("linear", "poisson", "negbinom"), resid_gdsfn, verbose=TRUE)
+{
+    # check
+    model.use <- match.arg(model.use)
+    if (NROW(latent.data) != NCOL(x))
+        stop("Uneven number of cells between latent data and expression data.")
+    # initialize
+    lin_qr <- NULL
+    if (model.use == "linear")
+    {
+        vars.to.regress <- colnames(latent.data)
+        fm <- as.formula(paste("GENE ~", paste(vars.to.regress, collapse="+")))
+        mat <- cbind(latent.data, x[1L, ])
+        colnames(mat) <- c(colnames(latent.data), "GENE")
+        lin_qr <- lm(fm, mat, qr=TRUE)$qr
+    }
+
+    # split the rows according to single/multiple processes
+    spl <- scNumSplit(nrow(x))
+    if (length(spl) <= 1L)
+    {
+        .x_regress_out_block(x, latent.data, model.use, out_nd, lin_qr,
+            if (verbose) "" else NULL)
+    } else {
         if (verbose)
-            setTxtProgressBar(pb, currentBlockId())
-        ans
-    }, grid=gd, as.sparse=NA, BPPARAM=NULL)
-    if (verbose) close(pb)
+        {
+            .cat(sprintf("\\=> Distributed to %d processes:", length(spl)))
+            for (ss in spl)
+                .cat("    ", resid_gdsfn, ".", ss[1L], "-", ss[2L], "  ...")
+        }
+        # split
+        v <- bplapply(spl, function(ss, x, latent.data, model.use, lin_qr, fn)
+        {
+            fn <- paste0(fn, ".", ss[1L], "-", ss[2L])
+            x <- x[seq.int(ss[1L], ss[2L]), , drop=FALSE]
+            outf <- createfn.gds(fn)
+            on.exit(closefn.gds(outf))
+            outnd <- add.gdsn(outf, "residuals", storage="double",
+                valdim=c(ncol(x), 0L))
+            .x_regress_out_block(x, latent.data, model.use, outnd, lin_qr,
+                paste0(fn, ".progress"))
+            fn
+        }, BPPARAM=getAutoBPPARAM(),
+            x=x, latent.data=latent.data, model.use=model.use, lin_qr=lin_qr,
+            fn=resid_gdsfn)
+        fn_lst <- unlist(v)
+        # merge
+        for (fn in fn_lst)
+        {
+            f <- openfn.gds(fn)
+            append.gdsn(out_nd, index.gdsn(f, "residuals"))
+            closefn.gds(f)
+        }
+        # delete temp files
+        unlink(c(fn_lst, paste0(fn_lst, ".progress")), force=TRUE)
+    }
 
     # output
-    if (is.null(out_nd))
-    {
-        ans <- do.call(rbind, lst)
-        colnames(ans) <- colnames(x)
-        ans
-    } else {
-        colnames(x)
-    }
+    colnames(x)
 }
 
 .scale_regress_out <- function(object, features, vars.to.regress, latent.data,
     split.cells, use_gds, model.use='linear', use.umi=FALSE, verbose=TRUE)
 {
     # check
+    stopifnot(is.character(use_gds), length(use_gds)==1L)
     if (verbose)
         .cat("Regressing out: ", paste(vars.to.regress, collapse=", "))
     if (is.null(latent.data))
@@ -384,9 +436,8 @@ NormalizeData.SC_GDSMatrix <- function(object,
         s <- intersect(vars.to.regress, rownames(object))
         if (verbose)
             .cat("Loading the matrix for ", paste(s, collapse=", "))
-        x <- object[s, , drop=FALSE]
-        latent.data <- cbind(latent.data, as.matrix(t(x)))
-        remove(x)
+        latent.data <- cbind(latent.data,
+            t(as.matrix(object[s, , drop=FALSE])))
     }
     notfound <- setdiff(vars.to.regress, colnames(latent.data))
     if (length(notfound) == length(vars.to.regress))
@@ -396,31 +447,28 @@ NormalizeData.SC_GDSMatrix <- function(object,
     } else if (length(notfound) > 0L)
     {
         warning("Requested variables to regress not in object: ",
-            paste(notfound, collapse = ", "), call.=FALSE, immediate.=TRUE)
+            paste(notfound, collapse=", "), call.=FALSE, immediate.=TRUE)
         vars.to.regress <- colnames(latent.data)
     }
 
-    # use DelayedMatrix ?
-    resid_gdsfn <- outf <- out_nd <- NULL
-    if (is.character(use_gds))
+    # use DelayedMatrix
+    resid_gdsfn <- paste0("_temp", use_gds)
+    if (verbose)
+        .cat("Writing to ", sQuote(resid_gdsfn))
+    if (file.exists(resid_gdsfn))
     {
-        resid_gdsfn <- paste0("_temp", use_gds)
-        if (verbose)
-            .cat("Writing to ", sQuote(resid_gdsfn))
-        if (file.exists(use_gds))
-        {
-            warning("Overwriting the file '", resid_gdsfn, "'",
-                call.=FALSE, immediate.=TRUE)
-        }
-        # create a GDS file for regression residuals
-        outf <- createfn.gds(resid_gdsfn)
-        on.exit(closefn.gds(outf))  # in case fail
+        warning("Overwriting the file ", sQuote(resid_gdsfn), call.=FALSE,
+            immediate.=TRUE)
     }
-    if (verbose && x_warn_speed(object))
-    {
-        message("Regressing maybe faster with a larger block size ",
-            "via setAutoBlockSize()")
-    }
+    # create a GDS file for regression residuals
+    outf <- createfn.gds(resid_gdsfn)
+    on.exit(closefn.gds(outf))  # in case fail
+
+    # if (verbose && x_warn_speed(object))
+    # {
+    #     message("Regressing maybe faster with a larger block size ",
+    #         "via setAutoBlockSize()")
+    # }
 
     # run regression
     lst <- lapply(seq_along(split.cells), FUN=function(i)
@@ -428,49 +476,38 @@ NormalizeData.SC_GDSMatrix <- function(object,
         if (verbose && length(split.cells) > 1L)
             .cat("Regressing out variables from split ", names(split.cells)[i])
         ss <- split.cells[[i]]
-        if (!is.null(outf))
-        {
-            # a new GDS node storing matrix
-            out_nd <- add.gdsn(outf, sprintf("residuals.%d", i),
-                storage="double", valdim=c(length(ss), 0L))
-        }
+        # a new GDS node storing matrix
+        out_nd <- add.gdsn(outf, sprintf("residuals.%d", i),
+            storage="double", valdim=c(length(ss), 0L))
+        # regress and save to out_nd
         .x_regress_out(
             object[, ss, drop=FALSE], latent.data[ss, , drop=FALSE],
-            out_nd, model.use, verbose)
+            out_nd, model.use, resid_gdsfn, verbose)
     })
 
     # finally
-    if (is.null(outf))
+    on.exit()
+    closefn.gds(outf)  # close the GDS file
+    if (length(split.cells) == 1L)
     {
-        # in-memory matrix
-        x <- do.call(cbind, lst)
-        gds_colnm <- colnames(x)
+        x <- t(scArray(resid_gdsfn, "residuals.1"))
     } else {
-        # on-disk backend
-        on.exit()
-        if (length(split.cells) == 1L)
+        # merge
+        outf <- openfn.gds(resid_gdsfn, readonly=FALSE)
+        out_nd <- add.gdsn(outf, "residuals", storage="double",
+            valdim=c(nrow(object), 0L))
+        for (i in seq_along(split.cells))
         {
-            closefn.gds(outf)  # close the GDS file
-            x <- t(scArray(resid_gdsfn, "residuals.1"))
-        } else {
-            # merge
-            closefn.gds(outf)  # close the GDS file
-            outf <- openfn.gds(resid_gdsfn, readonly=FALSE)
-            out_nd <- add.gdsn(outf, "residuals", storage="double",
-                valdim=c(nrow(object), 0L))
-            for (i in seq_along(split.cells))
-            {
-                # block write
-                m <- scArray(outf, sprintf("residuals.%d", i))
-                blockReduce(function(bk, v) append.gdsn(out_nd, t(bk)),
-                    m, init=NULL, grid=rowAutoGrid(m))
-            }
-            remove(m)
-            closefn.gds(outf)  # close the GDS file
-            x <- scArray(resid_gdsfn, "residuals")
+            # block write
+            m <- scArray(outf, sprintf("residuals.%d", i))
+            blockReduce(function(bk, v) append.gdsn(out_nd, t(bk)),
+                m, init=NULL, grid=rowAutoGrid(m))
         }
-        gds_colnm <- unlist(lst)
+        remove(m)
+        closefn.gds(outf)  # close the GDS file
+        x <- scArray(resid_gdsfn, "residuals")
     }
+    gds_colnm <- unlist(lst)
     if (!identical(gds_colnm, colnames(object)))
     {
         i <- match(colnames(object), gds_colnm)
@@ -485,7 +522,6 @@ NormalizeData.SC_GDSMatrix <- function(object,
         object <- log1p(object - m)
     }
 
-    if (is.null(outf)) CheckGC()  # in-memory
     # output
     list(object=object, filename=resid_gdsfn)
 }
@@ -514,8 +550,9 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     object.names <- dimnames(object)
 
     # use DelayedMatrix ?
-    resid_gdsfn <- NULL    # temporary file name
+    resid_gdsfn <- NULL    # temporary file name for residuals
     force_gds <- is.character(use_gds)
+    use_mem <- FALSE
     if (is.logical(use_gds))
     {
         if (isTRUE(use_gds))
@@ -523,12 +560,16 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
             use_gds <- attr(use_gds, "gdsfn")
             if (!is.character(use_gds))
                 use_gds <- .find_filename("_scale_data%d.gds")
+        } else {
+            use_gds <- tempfile("_scale_", tmpdir=".", fileext=".gds")
+            use_mem <- TRUE
         }
     } else if (!is.character(use_gds) || is.na(use_gds))
     {
         stop("'use_gds' should be FALSE, TRUE or a file name.")
     }
 
+    # adjust for covariates
     if (!is.null(vars.to.regress))
     {
         v <- .scale_regress_out(object, features, vars.to.regress,
@@ -550,28 +591,24 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         .cat(msg)
     }
 
-    # output variable
-    out_nd <- NULL
-    if (is.character(use_gds) &&
-        (force_gds || length(split.cells)>1L || !is.null(vars.to.regress)))
+    # output gds file ?
+    outf <- out_nd <- NULL
+    if (force_gds || length(split.cells)>1L || !is.null(vars.to.regress))
     {
         # use DelayedMatrix
         if (verbose)
             .cat("Writing to ", sQuote(use_gds))
-        if (is.null(vars.to.regress))
+        if (!force_gds && file.exists(use_gds))
         {
-            if (file.exists(use_gds))
-            {
-                warning("Overwriting the file '", use_gds, "'",
-                    call.=FALSE, immediate.=TRUE)
-            }
+            warning("Overwriting the file ", sQuote(use_gds), call.=FALSE,
+                immediate.=TRUE)
         }
         # create a GDS file
         outf <- createfn.gds(use_gds)
         on.exit(closefn.gds(outf))  # in case fail
         # a new GDS node storing matrix
         out_nd <- add.gdsn(outf, "scale.data", storage="double",
-            valdim=c(nrow(object), 0L), replace=TRUE)
+            valdim=c(nrow(object), 0L))
     }
 
     # Scale each cell split
@@ -584,13 +621,10 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
             ii <- match(split.cells[[x]], colnames(object))
             m <- object[, ii, drop=FALSE]
         }
-        if (verbose)
+        if (verbose && length(split.cells)>1L && (do.scale || do.center))
         {
-            if (length(split.cells)>1L && (do.scale || do.center))
-            {
-                .cat("Data split (", class(m)[1L], " [",
-                    paste(dim(m), collapse=","), "]): ", x)
-            }
+            .cat("Data split (", class(m)[1L], " [",
+                paste(dim(m), collapse=","), "]): ", x)
         }
         # center & scale, return a DelayedMatrix
         m <- .x_row_scale(m, do.center, do.scale, scale.max)
@@ -599,13 +633,8 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         {
             x_append_gdsn(m, out_nd, verbose)
             split.cells[[x]]  # output colnames
-        } else if (is.character(use_gds))
-        {
+        } else
             m  # output, no need a new GDS file
-        } else {
-            # in-memory
-            as.matrix(m)  # output
-        }
     })
 
     # output
@@ -615,14 +644,11 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
         closefn.gds(outf)  # close the GDS file
         scaled.data <- scArray(use_gds, "scale.data")
         gds_colnm <- unlist(lst)
-    } else if (is.character(use_gds))
-    {
-        # length(split.cells) == 1, and a single DelayedMatrix
-        scaled.data <- lst[[1L]]
-        gds_colnm <- colnames(scaled.data)
     } else {
-        # in-memory
-        scaled.data <- do.call(cbind, lst)
+        if (length(lst) == 1L)
+            scaled.data <- lst[[1L]]
+        else
+            scaled.data <- do.call(cbind, lst)
         gds_colnm <- colnames(scaled.data)
     }
     if (!identical(gds_colnm, colnames(object)))
@@ -632,14 +658,23 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     }
     dimnames(scaled.data) <- object.names
 
+    # in-memory ?
+    if (use_mem)
+        scaled.data <- as.matrix(scaled.data)
     # clean temp data
-    if (!is.null(resid_gdsfn) && isTRUE(rm_tmpfile))
+    if (isTRUE(rm_tmpfile))
     {
-        if (verbose) .cat("Delete ", sQuote(resid_gdsfn))
-        unlink(resid_gdsfn, force=TRUE)
+        s <- NULL
+        if (!is.null(resid_gdsfn)) s <- c(s, resid_gdsfn)
+        if (use_mem) s <- c(s, use_gds)
+        if (length(s))
+        {
+            if (verbose)
+                .cat("Delete ", paste(sQuote(s), collapse=", "))
+            unlink(s, force=TRUE)
+        }
     }
 
-    if (is.matrix(scaled.data)) CheckGC()  # in-memory
     return(scaled.data)
 }
 
@@ -654,29 +689,24 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     # initialize
     inv <- 1 / sd
     inv[!is.finite(inv)] <- 0
-    gd <- colAutoGrid(x)
-    pb <- NULL
-    if (verbose)
-    {
-        pb <- txtProgressBar(0L, length(gd), style=3L, width=64L, file=stderr())
-        on.exit(close(pb))
-    }
-    # block read
-    v <- blockReduce(function(bk, v, mu, mu2, inv, vmax, pb)
-    {
-        if (is(bk, "SparseArraySeed"))
+    # reduce
+    v <- SCArray:::.parallel_col_reduce(x, getAutoBPPARAM(),
+        Fun = function(bk, v, mu, mu2, inv, vmax)
         {
-            i <- bk@nzindex[, 1L]  # row index
-            bk@nzdata <- pmin((bk@nzdata - mu[i])*inv[i], vmax)^2L - mu2[i]
-            b <- as(bk, "sparseMatrix")
-            v <- v + mu2*ncol(b)
-        } else {
-            b <- pmin((bk - mu)*inv, vmax)^2L
-        }
-        if (!is.null(pb)) setTxtProgressBar(pb, currentBlockId())
-        v + rowSums(b)
-    }, x, 0, grid=gd, as.sparse=NA, mu=mu, mu2=pmin(-mu*inv, vmax)^2L,
-        inv=inv, vmax=vmax, pb=pb)
+            if (is(bk, "SparseArraySeed"))
+            {
+                i <- bk@nzindex[, 1L]  # row index
+                bk@nzdata <-
+                    base::pmin((bk@nzdata - mu[i])*inv[i], vmax)^2L - mu2[i]
+                b <- as(bk, "sparseMatrix")
+                v + mu2*ncol(b) + rowSums(b)
+            } else {
+                b <- base::pmin((bk - mu)*inv, vmax)^2L
+                v + rowSums(b)
+            }
+        },
+        InitFun = 0, ReduceFun = `+`, .progress = isTRUE(verbose),
+        mu=mu, mu2=base::pmin(-mu*inv, vmax)^2L, inv=inv, vmax=vmax)
     # output
     v[!is.finite(v)] <- 0
     v / (ncol(x) - 1L)
