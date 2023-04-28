@@ -11,10 +11,10 @@
 \usage{
 # RunPCA(object, ...)
 \method{RunPCA}{SCArrayAssay}(object, assay=NULL, features=NULL, npcs=50,
-    rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
+    rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, ...)
 \method{RunPCA}{SC_GDSMatrix}(object, assay=NULL, npcs=50, rev.pca=FALSE,
-    weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
+    weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE,
     BPPARAM, ...)
 }

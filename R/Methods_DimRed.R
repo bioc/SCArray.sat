@@ -13,7 +13,7 @@
 ####  Methods -- RunPCA()  ####
 
 RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
-    rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
+    rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, ...)
 {
     # check
@@ -64,7 +64,7 @@ RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
 
 
 RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
-    weight.by.var=TRUE, verbose=TRUE, ndims.print=seq_len(5),
+    weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE,
     BPPARAM, ...)
 {

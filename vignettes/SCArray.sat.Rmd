@@ -283,6 +283,9 @@ plan(multicore, workers=4)  # 4 cores
 message("Number of parallel workers: ", nbrOfWorkers())
 ```
 
+In the function `FindMarkers()`, users should use `DelayedArray::setAutoBPPARAM()` to set a parallel environment and reset the `future` package via `plan(sequential)`.
+
+
 ~
 
 ### Downgrade SCArrayAssay
