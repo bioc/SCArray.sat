@@ -11,6 +11,8 @@ S3method(subset, SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
 S3method(RunPCA, SCArrayAssay)
+S3method(FindMarkers, SCArrayAssay)
+S3method(FoldChange, SCArrayAssay)
 
 # methods for DelayedMatrix
 S3method(as.sparse, DelayedMatrix)
@@ -33,7 +35,7 @@ importFrom(gdsfmt,
     add.gdsn, append.gdsn, closefn.gds, createfn.gds, openfn.gds, index.gdsn)
 importFrom(utils,
     capture.output, packageVersion, txtProgressBar, setTxtProgressBar)
-importFrom(stats, loess, quantile, as.formula, glm, lm, residuals)
+importFrom(stats, loess, quantile, as.formula, glm, lm, residuals, p.adjust)
 importFrom(BiocGenerics, counts, path)
 importFrom(BiocParallel, SerialParam, bplapply)
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
@@ -46,7 +48,9 @@ importFrom(SeuratObject,
     Assays, AddMetaData, IsMatrixEmpty, Key, 'Key<-', as.sparse,
     VariableFeatures, 'VariableFeatures<-',
     CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateDimReducObject)
-importFrom(Seurat, NormalizeData, ScaleData, FindVariableFeatures, RunPCA)
+importFrom(Seurat,
+    NormalizeData, ScaleData, FindVariableFeatures, RunPCA, FindMarkers,
+    FoldChange)
 
 # Import the classes and methods in DelayedArray & SCArray
 importClassesFrom(DelayedArray, DelayedArray, DelayedMatrix)

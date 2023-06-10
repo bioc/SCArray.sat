@@ -266,7 +266,7 @@ GetAssayData(d, "counts")  # reopens the GDS file automatically
 
 ~
 
-### Multicore or Multi-process Implementation
+## Multicore or Multi-process Implementation
 
 The multicore and multi-process features are supported by SCArray and SCArray.sat via the Bioconductor package "BiocParallel". To enable the parallel feature, users can use the function `setAutoBPPARAM()` in the DelayedArray package to setup multi-process workers. For examples,
 ```R
@@ -275,6 +275,7 @@ library(BiocParallel)
 DelayedArray::setAutoBPPARAM(MulticoreParam(4))  # 4 child processes
 ```
 
+### RunUMAP()
 The Seurat package utilizes the "future" package to perform parallel calculations. To enable multi-threading in `RunUMAP()`, users should also set a "plan" for parallel processing, since Seurat uses `nbrOfWorkers()` to determine the number of threads internally. E.g.,
 ```R
 library(future)
@@ -283,9 +284,13 @@ plan(multicore, workers=4)  # 4 cores
 message("Number of parallel workers: ", nbrOfWorkers())
 ```
 
+### FindMarkers()
+In the function `FindMarkers()`, users should use `DelayedArray::setAutoBPPARAM()` to set a parallel environment and reset the `future` package via `plan(sequential)`.
+
+
 ~
 
-### Downgrade SCArrayAssay
+## Downgrade SCArrayAssay
 
 The `SCArrayAssay` object can be downgraded to the regular `Assay`. It is useful when the downstream functions or packages do not support DelayedArray. 
 
@@ -335,22 +340,24 @@ Not all of the functions in the Seurat package can be applied to the `SCArrayAss
 | ✓   |NormalizeData()        |  |
 | ✓   |RunPCA()               |  |
 | ✓   |ScaleData()            |  |
-| ☑   |FindMarkers()          |  |
-| ☑   |HVFInfo()              |  |
-| ☑   |RunUMAP()              |  |
-| ☑   |RunTSNE()              |  |
-| ☑   |RunSPCA()              |  |
-| ☑   |ProjectDIM()           |  |
-| ☑   |ProjectUMAP()          |  |
-| ☑   |SVFInfo()              |  |
-| ☑   |VariableFeatures()     |  |
+| ☑   |FindMarkers()          | data read via blocking |
+| ☑   |FoldChange()           |  |
+| ⦿   |HVFInfo()              |  |
+| ⦿   |RunUMAP()              |  |
+| ⦿   |RunTSNE()              |  |
+| ⦿   |RunSPCA()              |  |
+| ⦿   |ProjectDIM()           |  |
+| ⦿   |ProjectUMAP()          |  |
+| ⦿   |SVFInfo()              |  |
+| ⦿   |VariableFeatures()     |  |
 | ✗   |CreateAssayObject()    | use CreateAssayObject2() instead |
 | ✗   |as.Seurat()            |  |
 | ✗   |RunICA()               |  |
 | ✗   |SCTransform()          |  |
 
 * ✓ Supported (implemented in SCArray.sat)
-* ☑ Supported with the implementation in Seurat
+* ☑ Supported (mainly relying on the implementation in Seurat)
+* ⦿ Supported (implemented in Seurat, not in SCArray.sat)
 * ✗ Unsupported (raising an error)
 
 
