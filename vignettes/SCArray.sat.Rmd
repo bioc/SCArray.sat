@@ -340,7 +340,7 @@ Not all of the functions in the Seurat package can be applied to the `SCArrayAss
 | ✓   |NormalizeData()        |  |
 | ✓   |RunPCA()               |  |
 | ✓   |ScaleData()            |  |
-| ☑   |FindMarkers()          | faster data read via blocking |
+| ☑   |FindMarkers()          | data read via blocking |
 | ☑   |FoldChange()           |  |
 | ⦿   |HVFInfo()              |  |
 | ⦿   |RunUMAP()              |  |

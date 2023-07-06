@@ -149,6 +149,8 @@ scNewSeuratGDS <- function(gdsfile, assay.name=NULL, key=c(counts="rna_"),
         s <- gdsfile
         if (inherits(s, "SCArrayFileClass")) s <- path(gdsfile)
         .cat("Input: ", s)
+        old_opt <- options(SCArray.progress.verbose=TRUE)
+        on.exit(options(old_opt))
     }
     sce <- scExperiment(gdsfile, load.row=isTRUE(row_data),
         load.col=isTRUE(col_data))
