@@ -342,20 +342,24 @@ Not all of the functions in the Seurat package can be applied to the `SCArrayAss
 | ✓   |ScaleData()            |  |
 | ☑   |FindMarkers()          | data read via blocking |
 | ☑   |FoldChange()           |  |
+| ☑   |RunICA()               |  |
+| ☑   |RunSPCA()              |  |
+| ☑   |RunLDA()               |  |
+| ☑   |RunSLSI()              |  |
+| ⦿   |FindNeighbors          |  |
 | ⦿   |HVFInfo()              |  |
 | ⦿   |RunUMAP()              |  |
 | ⦿   |RunTSNE()              |  |
-| ⦿   |RunSPCA()              |  |
-| ⦿   |ProjectDIM()           |  |
+| ⦿   |ProjectDim()           |  |
 | ⦿   |ProjectUMAP()          |  |
 | ⦿   |SVFInfo()              |  |
 | ⦿   |VariableFeatures()     |  |
 | ✗   |CreateAssayObject()    | use CreateAssayObject2() instead |
 | ✗   |as.Seurat()            |  |
-| ✗   |RunICA()               |  |
+| ✗   |RunCCA()               |  |
 | ✗   |SCTransform()          |  |
 
-* ✓ Supported (implemented in SCArray.sat)
+* ✓ Supported (implemented in SCArray.sat, optimized for memory uses)
 * ☑ Supported (mainly relying on the implementation in Seurat)
 * ⦿ Supported (implemented in Seurat, not in SCArray.sat)
 * ✗ Unsupported (raising an error)

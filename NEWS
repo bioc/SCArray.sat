@@ -1,13 +1,13 @@
-CHANGES IN VERSION 1.0.2
--------------------------
-
-    o fix `subset.SCArrayAssay()`
-
-
-CHANGES IN VERSION 1.0.1
+CHANGES IN VERSION 1.0.3
 -------------------------
 
     o update `FoldChange.SCArrayAssay()` and `FindMarkers.SCArrayAssay()`
+
+    o fix `subset.SCArrayAssay()`
+
+    o update `RunICA.SCArrayAssay()`, `RunSPCA.SCArrayAssay()`,
+      `RunLDA.SCArrayAssay()`, `RenameCells.SCArrayAssay()`,
+      `merge.SCArrayAssay()`
 
 
 CHANGES IN VERSION 1.0.0
