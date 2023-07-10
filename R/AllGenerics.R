@@ -157,6 +157,79 @@ SetAssayData.SCArrayAssay <- function(object,
 }
 
 
+# Rename cell names
+RenameCells.SCArrayAssay <- function(object, new.names=NULL, ...)
+{
+    CheckDots(...)
+    for (data.slot in c("counts2", "data2", "scale.data2"))
+    {
+        old.data <- slot(object, name=data.slot)
+        if (NCOL(old.data) <= 1L) next
+        colnames(slot(object, name=data.slot)) <- new.names
+    }
+    object
+}
+
+
+# Merge a list of SCArrayAssay
+.row_merge_mat <- function(all.mat)
+{
+    all.colnames <- all.rownames <- vector("list", length(all.mat))
+    for (i in seq_along(all.mat))
+    {
+        all.rownames[[i]] <- rownames(all.mat[[i]])
+        all.colnames[[i]] <- colnames(all.mat[[i]])
+    }
+    use.cbind <- all(duplicated(all.rownames)[-1L])
+    if (isTRUE(use.cbind))
+    {
+        new.mat <- do.call(cbind, all.mat)
+    } else {
+        stop("All matrices should have the same row names for merging.")
+    }
+    colnames(new.mat) <- make.unique(unlist(all.colnames))
+    new.mat
+}
+
+merge.SCArrayAssay <- function(x=NULL, y=NULL, add.cell.ids=NULL,
+    merge.data=TRUE, ...)
+{
+    x_msg("Calling merge.SCArrayAssay() ...")
+    CheckDots(...)
+    assays <- c(x, y)
+    if (!is.null(add.cell.ids))
+    {
+        for (i in seq_along(assays))
+            assays[[i]] <- RenameCells(assays[[i]], new.names=add.cell.ids[i])
+    }
+    # merge the counts
+    counts.mats <- lapply(assays, FUN=Seurat:::ValidateDataForMerge,
+        slot="counts")
+    keys <- vapply(assays, FUN=Key, "")
+    merged.counts <- .row_merge_mat(counts.mats)
+    combined.assay <- CreateAssayObject2(merged.counts,
+        min.cells=-1, min.features=-1)
+    if (length(unique(keys)) == 1L)
+        Key(combined.assay) <- keys[1L]
+    # merge the data
+    if (merge.data)
+    {
+        data.mats <- lapply(assays, FUN=Seurat:::ValidateDataForMerge,
+            slot="data")
+        merged.data <- .row_merge_mat(data.mats)
+        # only keep cells that made it through counts filtering params
+        if (!all.equal(colnames(combined.assay), colnames(merged.data)))
+        {
+            merged.data <- merged.data[, colnames(combined.assay)]
+        }
+        combined.assay <- SetAssayData(combined.assay,
+            slot="data", new.data=merged.data)
+    }
+    combined.assay
+}
+
+
+
 ####  scGetFiles()  ####
 
 .scget_sc_assay <- function(object, ...)
@@ -260,4 +333,3 @@ CheckMatrix.SC_GDSMatrix <- function(object, checks=NULL, ...)
         warning("Input matrix contains NA/NaN or infinite values.")
     invisible()
 }
-

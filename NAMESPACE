@@ -10,9 +10,15 @@ exportMethods(scGetFiles, scMemory)
 S3method(subset, SCArrayAssay)
 S3method(GetAssayData, SCArrayAssay)
 S3method(SetAssayData, SCArrayAssay)
-S3method(RunPCA, SCArrayAssay)
+S3method(RenameCells, SCArrayAssay)
+S3method(merge, SCArrayAssay)
 S3method(FindMarkers, SCArrayAssay)
 S3method(FoldChange, SCArrayAssay)
+S3method(RunPCA, SCArrayAssay)
+S3method(RunICA, SCArrayAssay)
+S3method(RunSPCA, SCArrayAssay)
+S3method(RunLDA, SCArrayAssay)
+S3method(RunSLSI, SCArrayAssay)
 
 # methods for DelayedMatrix
 S3method(as.sparse, DelayedMatrix)
@@ -47,10 +53,11 @@ importFrom(SeuratObject,
     GetAssayData, SetAssayData, CreateSeuratObject,
     Assays, AddMetaData, IsMatrixEmpty, Key, 'Key<-', as.sparse,
     VariableFeatures, 'VariableFeatures<-',
-    CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateDimReducObject)
+    CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateDimReducObject,
+    RenameCells)
 importFrom(Seurat,
-    NormalizeData, ScaleData, FindVariableFeatures, RunPCA, FindMarkers,
-    FoldChange)
+    NormalizeData, ScaleData, FindVariableFeatures, FindMarkers, FoldChange,
+    RunPCA, RunICA, RunSPCA, RunLDA, RunSLSI)
 
 # Import the classes and methods in DelayedArray & SCArray
 importClassesFrom(DelayedArray, DelayedArray, DelayedMatrix)

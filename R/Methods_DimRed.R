@@ -10,6 +10,52 @@
 #
 
 
+################################
+
+# Prepare data matrix for dimensionality reduction
+xPrepDR <- function(object, features=NULL, slot="scale.data", verbose=TRUE)
+{
+    if (length(VariableFeatures(object))==0L && is.null(features))
+    {
+        stop("Variable features haven't been set. ",
+            "Run FindVariableFeatures() or provide a vector of feature names.")
+    }
+    data.use <- GetAssayData(object, slot=slot)
+    if (nrow(data.use)==0L && slot=="scale.data")
+        stop("Data has not been scaled. Please run ScaleData and retry")
+    if (is.null(features))
+        features <- VariableFeatures(object)
+    features.keep <- unique(features[features %in% rownames(data.use)])
+    if (length(features.keep) < length(features))
+    {
+        features.exclude <- setdiff(features, features.keep)
+        if (verbose)
+        {
+            warning("The following ", length(features.exclude),
+                " features requested have not been scaled (running reduction without them): ",
+                paste0(features.exclude, collapse=", "))
+        }
+    }
+    features <- features.keep
+    features.var <- rowVars(data.use)
+    features.keep <- features[features.var > 0]
+    if (length(features.keep) < length(features))
+    {
+        features.exclude <- setdiff(features, features.keep)
+        if (verbose)
+        {
+            warning("The following ", length(features.exclude),
+                " features requested have zero variance (running reduction without them): ",
+                paste0(features.exclude, collapse=", "))
+        }
+    }
+    features <- features.keep
+    features <- features[!is.na(features)]
+    data.use[features, ]
+}
+
+
+
 ####  Methods -- RunPCA()  ####
 
 RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
@@ -138,4 +184,69 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
 
     return(reduction.data)
 }
+
+
+####  Methods -- RunICA()  ####
+
+RunICA.SCArrayAssay <- function(object, assay=NULL, features=NULL, nics=50,
+    rev.ica=FALSE, ica.function="icafast", verbose=TRUE, ndims.print=1:5,
+    nfeatures.print=30, reduction.name="ica", reduction.key="ica_",
+    seed.use=42, ...)
+{
+    x_msg("Calling RunICA.SCArrayAssay() ...")
+    data.use <- xPrepDR(object, features=features, verbose=verbose)
+    x_msg("  \\= Running ICA dimensionality reduction ...")
+    RunICA(object=data.use, assay=assay,
+        nics=nics, rev.ica=rev.ica, ica.function=ica.function,
+        verbose=verbose, ndims.print=ndims.print,
+        nfeatures.print=nfeatures.print, reduction.key=reduction.key,
+        seed.use=seed.use, ...)
+}
+
+
+####  Methods -- RunSPCA()  ####
+
+RunSPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
+    reduction.key="SPC_", graph=NULL, verbose=TRUE, seed.use=42, ...)
+{
+    x_msg("Calling RunSPCA.SCArrayAssay() ...")
+    data.use <- xPrepDR(object, features=features, verbose=verbose)
+    x_msg("  \\= Running supervised PCA ...")
+    RunSPCA(object=data.use, assay=assay,
+        npcs=npcs, reduction.key=reduction.key,
+        graph=graph, verbose=verbose, seed.use=seed.use, ...)
+}
+
+
+####  Methods -- RunLDA()  ####
+
+RunLDA.SCArrayAssay <- function(object, assay=NULL, labels, features=NULL,
+    verbose=TRUE, ndims.print=1:5, nfeatures.print=30, reduction.key="LDA_",
+    seed=42, ...)
+{
+    x_msg("Calling RunLDA.SCArrayAssay() ...")
+    data.use <- xPrepDR(object, features=features, verbose = verbose)
+    x_msg("  \\= Load the matrix")
+    object <- as.matrix(t(data.use))
+    x_msg("  \\= Running linear discriminant analysis ...")
+    RunLDA(object = object, assay=assay,
+        labels=labels, verbose=verbose, ndims.print=ndims.print,
+        nfeatures.print=nfeatures.print, reduction.key=reduction.key,
+        seed=seed, ...)
+}
+
+
+####  Methods -- RunSLSI()  ####
+
+RunSLSI.SCArrayAssay <- function(object, assay=NULL, features=NULL, n=50,
+    reduction.key="SLSI_", graph=NULL, verbose=TRUE, seed.use=42, ...)
+{
+    x_msg("Calling RunSPCA.SCArrayAssay() ...")
+    data.use <- xPrepDR(object, features=features, slot="data", verbose=verbose)
+    x_msg("  \\= Running supervised LSI dimensionality reduction ...")
+    RunSLSI(object=data.use, assay=assay,
+        n=n, reduction.key=reduction.key, graph=graph,
+        verbose=verbose, seed.use=seed.use, ...)
+}
+
 
