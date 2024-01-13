@@ -2,12 +2,12 @@ Package: SCArray.sat
 Type: Package
 Title: Large-scale single-cell RNA-seq data analysis using GDS files and
         Seurat
-Version: 1.3.0
-Date: 2023-07-10
+Version: 1.3.1
+Date: 2024-01-13
 Depends: methods, SCArray (>= 1.7.13), SeuratObject (>= 4.0), Seurat (>= 4.0)
 Imports: S4Vectors, utils, stats, BiocGenerics, BiocParallel, gdsfmt,
-        DelayedArray, BiocSingular, SummarizedExperiment
-Suggests: RUnit, knitr, markdown, rmarkdown, BiocStyle
+        DelayedArray, BiocSingular, SummarizedExperiment, Matrix
+Suggests: future, RUnit, knitr, markdown, rmarkdown, BiocStyle
 Authors@R: c(person("Xiuwen", "Zheng", role=c("aut", "cre"), email=
         "xiuwen.zheng@abbvie.com", comment=c(ORCID="0000-0002-1390-0708")),
         person("Seurat contributors", role="ctb",

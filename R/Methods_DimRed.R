@@ -186,6 +186,36 @@ RunPCA.SC_GDSMatrix <- function(object, assay=NULL, npcs=50, rev.pca=FALSE,
 }
 
 
+####  Methods -- RunUMAP()  ####
+
+RunUMAP.Seurat_g <- function(...)
+{
+    x_msg("Calling RunUMAP.Seurat_g() ...")
+    if (requireNamespace("future", quietly=TRUE))
+    {
+        bp <- getAutoBPPARAM()
+        nb <- if (is.null(bp)) 1L else bpnworkers(bp)
+        if (nb != future::nbrOfWorkers())
+        {
+            if (is.null(bp) || is(bp, "MulticoreParam"))
+            {
+                if (nb == 1L)
+                {
+                    old_plan <- future::plan(future::sequential)
+                } else if (.Platform$OS.type == "windows")
+                {
+                    old_plan <- future::plan(future::multisession, workers=nb)
+                } else {
+                    old_plan <- future::plan(future::multicore, workers=nb)
+                }
+                on.exit({ future::plan(old_plan) })
+            }
+        }
+    }
+    NextMethod()
+}
+
+
 ####  Methods -- RunICA()  ####
 
 RunICA.SCArrayAssay <- function(object, assay=NULL, features=NULL, nics=50,

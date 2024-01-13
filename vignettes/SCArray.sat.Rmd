@@ -106,17 +106,17 @@ d <- ScaleData(d)
 scGetFiles(d)
 
 # raw counts
-m <- GetAssayData(d, "counts")
+m <- GetAssayData(d, slot="counts")
 scGetFiles(m)    # the file name storing raw count data
 m
 
 # normalized expression
 # the normalized data does not save in neither the file nor the memory
-GetAssayData(d, "data")
+GetAssayData(d, slot="data")
 
 # scaled and centered data matrix
 # in this example, the scaled data does not save in neither the file nor the memory
-GetAssayData(d, "scale.data")
+GetAssayData(d, slot="scale.data")
 ```
 
 **Perform PCA and UMAP:**
@@ -261,7 +261,7 @@ gc()       # trigger a garbage collection
 
 d <- readRDS(save_fn)  # load from a RDS file
 d
-GetAssayData(d, "counts")  # reopens the GDS file automatically
+GetAssayData(d, slot="counts")  # reopens the GDS file automatically
 ```
 
 ~
@@ -274,18 +274,6 @@ library(BiocParallel)
 
 DelayedArray::setAutoBPPARAM(MulticoreParam(4))  # 4 child processes
 ```
-
-### RunUMAP()
-The Seurat package utilizes the "future" package to perform parallel calculations. To enable multi-threading in `RunUMAP()`, users should also set a "plan" for parallel processing, since Seurat uses `nbrOfWorkers()` to determine the number of threads internally. E.g.,
-```R
-library(future)
-
-plan(multicore, workers=4)  # 4 cores
-message("Number of parallel workers: ", nbrOfWorkers())
-```
-
-### FindMarkers()
-In the function `FindMarkers()`, users should use `DelayedArray::setAutoBPPARAM()` to set a parallel environment and reset the `future` package via `plan(sequential)`.
 
 
 ~
@@ -302,11 +290,11 @@ is(GetAssay(new_d))
 ```
 If users only want to 'downgrade' the scaled data matrix, then
 ```{r}
-is(GetAssayData(d, "scale.data"))  # it is a DelayedMatrix
+is(GetAssayData(d, slot="scale.data"))  # it is a DelayedMatrix
 
 new_d <- scMemory(d, slot="scale.data")  # downgrade "scale.data" in the active assay
 is(GetAssay(new_d))  # it is still SCArrayAssay
-is(GetAssayData(new_d, "scale.data"))  # in-memory matrix
+is(GetAssayData(new_d, slot="scale.data"))  # in-memory matrix
 ```
 
 ~
@@ -333,33 +321,33 @@ Not all of the functions in the Seurat package can be applied to the `SCArrayAss
 
 **Table 3: The states of functions and methods with the support of SCArrayAssay.**
 
-|State| Functions             | Notes        |
-|:---:|:----------------------|:-------------|
-| ✓   |CreateSeuratObject()   |  |
-| ✓   |FindVariableFeatures() |  |
-| ✓   |NormalizeData()        |  |
-| ✓   |RunPCA()               |  |
-| ✓   |ScaleData()            |  |
-| ☑   |FindMarkers()          | data read via blocking |
-| ☑   |FoldChange()           |  |
-| ☑   |RunICA()               |  |
-| ☑   |RunSPCA()              |  |
-| ☑   |RunLDA()               |  |
-| ☑   |RunSLSI()              |  |
-| ⦿   |FindNeighbors          |  |
-| ⦿   |HVFInfo()              |  |
-| ⦿   |RunUMAP()              |  |
-| ⦿   |RunTSNE()              |  |
-| ⦿   |ProjectDim()           |  |
-| ⦿   |ProjectUMAP()          |  |
-| ⦿   |SVFInfo()              |  |
-| ⦿   |VariableFeatures()     |  |
-| ✗   |CreateAssayObject()    | use CreateAssayObject2() instead |
-| ✗   |as.Seurat()            |  |
-| ✗   |RunCCA()               |  |
-| ✗   |SCTransform()          |  |
+|State|Functions              |Description                             |Notes                      |
+|:---:|:----------------------|:---------------------------------------|:--------------------------|
+| ✓   |CreateSeuratObject()   |  |  |
+| ✓   |FindVariableFeatures() |Identifies the top features |  |
+| ✓   |NormalizeData()        |Normalize the count data |  |
+| ✓   |RunPCA()               |Principal component analysis |  |
+| ✓   |ScaleData()            |Scales and centers features |  |
+| ☑   |FindMarkers()          |Differentially expressed genes | data read via blocking |
+| ☑   |FoldChange()           |  |  |
+| ☑   |RunICA()               |Independent component analysis |  |
+| ☑   |RunSPCA()              |Supervised principal component analysis |  |
+| ☑   |RunLDA()               |Linear discriminant analysis |  |
+| ☑   |RunSLSI()              |Supervised latent semantic indexing |  |
+| ☑   |RunUMAP()              |Uniform manifold approx. and projection |  |
+| ⦿   |FindNeighbors          |Nearest-neighbor graph construction |  |
+| ⦿   |HVFInfo()              |Info for highly variable features |  |
+| ⦿   |RunTSNE()              |t-SNE dimensionality reduction |  |
+| ⦿   |ProjectDim()           |  |  |
+| ⦿   |ProjectUMAP()          |  |  |
+| ⦿   |SVFInfo()              |Info for spatially variable features |  |
+| ⦿   |VariableFeatures()     |Get/set variable feature information |  |
+| ✗   |CreateAssayObject()    |  | use CreateAssayObject2() instead |
+| ✗   |as.Seurat()            |  | planned |
+| ✗   |RunCCA()               |Canonical correlation analysis | planned |
+| ✗   |SCTransform()          |Normalization via regularized NB regression | planned |
 
-* ✓ Supported (implemented in SCArray.sat, optimized for memory uses)
+* ✓ Supported (implemented in SCArray.sat, optimized for memory)
 * ☑ Supported (mainly relying on the implementation in Seurat)
 * ⦿ Supported (implemented in Seurat, not in SCArray.sat)
 * ✗ Unsupported (raising an error)

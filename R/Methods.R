@@ -79,7 +79,7 @@
 # Create an SCArrayAssay object from counts or data
 # similar to Seurat::CreateAssayObject, but allows DelayedMatrix
 CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
-    check.matrix=FALSE, ...)
+    key=NULL, check.matrix=FALSE, ...)
 {
     if (missing(counts) && missing(data))
     {
@@ -158,9 +158,17 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
         rownames(counts) <- gsub('|', '-', rownames(counts), fixed=TRUE)
         rownames(data) <- gsub('|', '-', rownames(data), fixed=TRUE)
     }
+    # key & others
+    k <- Key(object = key)[1L]
+    if (is.null(k)) k <- ''
+    m <- Matrix::sparseMatrix(i=c(), j=c(), x=double(),
+        dims = c(NROW(data), NCOL(data)),
+        dimnames = list(rownames(data), colnames(data)))
 
     # output
     new(Class = "SCArrayAssay",
+        key = k,
+        counts = m, data = m,
         counts2 = counts, data2 = data, scale.data2 = NULL,
         meta.features = data.frame(row.names = rownames(data)),
         misc = list())
