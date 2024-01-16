@@ -228,6 +228,11 @@ merge.SCArrayAssay <- function(x=NULL, y=NULL, add.cell.ids=NULL,
     combined.assay
 }
 
+merge.Seurat_g <- function(...)
+{
+    x_msg("Calling merge.Seurat_g() ...")
+    new("Seurat_g", NextMethod())
+}
 
 
 ####  scGetFiles()  ####
@@ -291,10 +296,17 @@ setMethod("scGetFiles", "Seurat", .scget_seurat)
 
 .scmemory_seurat <- function(x, assay=NULL, slot=NULL, ...)
 {
-    if (is.null(assay)) assay <- x@active.assay
+    if (is.null(assay)) assay <- names(x@assays)
     stopifnot(is.character(assay))
     for (nm in assay)
         x[[nm]] <- scMemory(x[[nm]], slot=slot, ...)
+    x
+}
+
+.scmemory_seurat_g <- function(x, assay=NULL, slot=NULL, ...)
+{
+    x <- .scmemory_seurat(x, assay=assay, slot=slot, ...)
+    if (is(x, "Seurat_g")) x <- as(x, "Seurat")
     x
 }
 
@@ -302,6 +314,8 @@ setMethod("scGetFiles", "Seurat", .scget_seurat)
 setMethod("scMemory", "SCArrayAssay", .scmemory_sc_assay)
 # Load data to memory for Seurat
 setMethod("scMemory", "Seurat", .scmemory_seurat)
+# Load data to memory for Seurat_g
+setMethod("scMemory", "Seurat_g", .scmemory_seurat_g)
 
 
 #######################################################################

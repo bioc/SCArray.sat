@@ -78,7 +78,7 @@ d <- NormalizeData(d)
 d <- FindVariableFeatures(d, nfeatures=50)
 d <- ScaleData(d)
 
-GetAssayData(d, "scale.data")  # DelayedMatrix
+GetAssayData(d, slot="scale.data")  # DelayedMatrix
 
 # scale with split.by
 ss <- rep(c(TRUE, FALSE), length.out=ncol(d))

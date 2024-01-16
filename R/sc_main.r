@@ -120,8 +120,13 @@ scNewAssayGDS <- function(gdsfile, name="counts", key="rna_", row_data=TRUE,
     }
     # key adjust if needed
     key <- Seurat:::UpdateKey(key)
+    w <- Matrix::sparseMatrix(i=c(), j=c(), x=double(),
+        dims = c(NROW(m), NCOL(m)),
+        dimnames = list(rownames(m), colnames(m)))
+
     # output
     new(Class = "SCArrayAssay",
+        counts = w, data = w,
         counts2 = m, data2 = m, scale.data2 = NULL, key = key,
         meta.features = meta_data, misc = list())
 }
@@ -214,6 +219,7 @@ scNewSeuratGDS <- function(gdsfile, assay.name=NULL, key=c(counts="rna_"),
     }
 
     # output
+    # new("Seurat_g", object)
     object
 }
 

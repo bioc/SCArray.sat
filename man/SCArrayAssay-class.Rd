@@ -24,8 +24,8 @@
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{Assay-class}}, \code{\link{GetAssayData}},
-    \code{\link{SetAssayData}}
+    \code{\link{Assay-class}}, \code{\link{Seurat_g-class}},
+    \code{\link{GetAssayData}}, \code{\link{SetAssayData}}
 }
 
 \keyword{GDS}

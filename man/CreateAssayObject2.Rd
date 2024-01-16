@@ -7,7 +7,7 @@ prenormalized data.
 }
 \usage{
 CreateAssayObject2(counts, data, min.cells=0, min.features=0,
-    check.matrix=FALSE, ...)
+    key=NULL, check.matrix=FALSE, ...)
 }
 \arguments{
     \item{counts}{Unnormalized raw counts (matrix, dgCMatrix or DelayedMatrix)}
@@ -16,6 +16,7 @@ CreateAssayObject2(counts, data, min.cells=0, min.features=0,
     \item{min.features}{if > 0, a lower cutoff for filtering features}
     \item{check.matrix}{Check counts matrix for NA, NaN, Inf, and non-integer
         values}
+    \item{key}{Key name for the assay}
     \item{...}{Arguments passed to \code{\link{as.sparse}} when \code{counts}
         or \code{data} is matrix or dgCMatrix}
 }

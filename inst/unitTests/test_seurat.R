@@ -8,7 +8,7 @@ suppressPackageStartupMessages({
 options(SCArray.verbose=TRUE)
 
 
-test_sce_matrix <- function()
+.test_sce_matrix <- function()
 {
 	# row count data in a GDS file
 	fn <- system.file("extdata", "example.gds", package="SCArray")
@@ -16,38 +16,38 @@ test_sce_matrix <- function()
 	# load Assay
 	x <- scNewAssayGDS(fn)
 	d1 <- Seurat::CreateSeuratObject(x)  # new DelayedMatrix-based Assay
-	m <- as(GetAssayData(d1, "counts"), "sparseMatrix")
+	m <- as(GetAssayData(d1, slot="counts"), "sparseMatrix")
 	d0 <- Seurat::CreateSeuratObject(m)  # regular in-memory Assay
 
     # raw counts
-	m0 <- GetAssayData(d0, "counts")
-	m1 <- GetAssayData(d1, "counts")
+	m0 <- GetAssayData(d0, slot="counts")
+	m1 <- GetAssayData(d1, slot="counts")
 	checkEquals(m0, as(m1, "sparseMatrix"), "row counts")
 
 	# normalize, method: CLR (margin = 1 or 2)
 	d1 <- NormalizeData(d1, normalization.method="CLR", margin=1)
 	d0 <- NormalizeData(d0, normalization.method="CLR", margin=1)
-	m0 <- GetAssayData(d0, "data")
-	m1 <- GetAssayData(d1, "data")
+	m0 <- GetAssayData(d0, slot="data")
+	m1 <- GetAssayData(d1, slot="data")
 	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with CLR & margin=1")
 	d1 <- NormalizeData(d1, normalization.method="CLR", margin=2)
 	d0 <- NormalizeData(d0, normalization.method="CLR", margin=2)
-	m0 <- GetAssayData(d0, "data")
-	m1 <- GetAssayData(d1, "data")
+	m0 <- GetAssayData(d0, slot="data")
+	m1 <- GetAssayData(d1, slot="data")
 	checkEquals(as.matrix(m0), as.matrix(m1), "normalized counts with CLR & margin=2")
 
 	# normalize, method: RC
 	d1 <- NormalizeData(d1, normalization.method="RC")
 	d0 <- NormalizeData(d0, normalization.method="RC")
-	m0 <- GetAssayData(d0, "data")
-	m1 <- GetAssayData(d1, "data")
+	m0 <- GetAssayData(d0, slot="data")
+	m1 <- GetAssayData(d1, slot="data")
 	checkEquals(m0, as(m1, "sparseMatrix"), "normalized counts with RC")
 
 	# normalize, method: LogNormalize
 	d1 <- NormalizeData(d1)
 	d0 <- NormalizeData(d0)
-	m0 <- GetAssayData(d0, "data")
-	m1 <- GetAssayData(d1, "data")
+	m0 <- GetAssayData(d0, slot="data")
+	m1 <- GetAssayData(d1, slot="data")
 	checkEquals(m0, as(m1, "sparseMatrix"), "normalized counts with LogNormalize")
 
     # feature subsets, method: mvp
@@ -74,23 +74,23 @@ test_sce_matrix <- function()
 		row.names=colnames(m1))
 	a1 <- ScaleData(GetAssay(d1), vars.to.regress=c("x1", "x2"), latent.data=dd)
 	a0 <- ScaleData(GetAssay(d0), vars.to.regress=c("x1", "x2"), latent.data=dd)
-	m0 <- GetAssayData(a0, "scale.data")
-	m1 <- GetAssayData(a1, "scale.data")
+	m0 <- GetAssayData(a0, slot="scale.data")
+	m1 <- GetAssayData(a1, slot="scale.data")
 	checkEquals(m0, as.matrix(m1), "scaled data with regressing out covariates")
 
 	# scale with split.by
 	ss <- rep(c(TRUE, FALSE), length.out=ncol(m1))
 	a1 <- ScaleData(GetAssay(d1), split.by=ss)
 	a0 <- ScaleData(GetAssay(d0), split.by=ss)
-	m0 <- GetAssayData(a0, "scale.data")
-	m1 <- GetAssayData(a1, "scale.data")
+	m0 <- GetAssayData(a0, slot="scale.data")
+	m1 <- GetAssayData(a1, slot="scale.data")
 	checkEquals(m0, as.matrix(m1), "scaled data with split.by")
 
 	# scale
 	d1 <- ScaleData(d1)
 	d0 <- ScaleData(d0)
-	m0 <- GetAssayData(d0, "scale.data")
-	m1 <- GetAssayData(d1, "scale.data")
+	m0 <- GetAssayData(d0, slot="scale.data")
+	m1 <- GetAssayData(d1, slot="scale.data")
 	checkEquals(m0, as.matrix(m1), "scaled data")
 
 	# runPCA

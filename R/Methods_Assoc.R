@@ -43,6 +43,17 @@ function(object, slot = "data", cells.1 = NULL, cells.2 = NULL,
     data.use <- GetAssayData(object, data.slot)
     counts <- switch(data.slot,
         scale.data = GetAssayData(object, "counts"), numeric())
+
+    # reset future plan
+    if (requireNamespace("future", quietly=TRUE))
+    {
+        if (future::nbrOfWorkers() != 1L)
+        {
+            old_plan <- future::plan(future::sequential)
+            on.exit({ future::plan(old_plan) })
+        }
+    }
+
     # get FC values
     fc.results <- FoldChange(object, slot=data.slot,
         cells.1=cells.1, cells.2=cells.2, features=features,
@@ -72,7 +83,7 @@ function(object, slot = "data", cells.1 = NULL, cells.2 = NULL,
     gd <- scRowAutoGrid(data.use)
     rv <- blockApply(data.use, function(bk, pm)
     {
-        if (is(bk, "SparseArraySeed")) bk <- as(bk, "CsparseMatrix")
+        if (is(bk, "SparseArraySeed")) bk <- as(bk, "sparseMatrix")
         pm$object <- bk
         pm$fc.results <- pm$fc.results[
             match(rownames(bk), rownames(pm$fc.results)), ]

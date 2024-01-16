@@ -2,9 +2,13 @@
 # Export the following names
 
 exportPattern("^sc*")
-exportClasses(SCArrayAssay)
+exportClasses(SCArrayAssay, Seurat_g)
 export(CreateAssayObject2)
 exportMethods(scGetFiles, scMemory)
+
+# methods for Seurat_g
+S3method(merge, Seurat_g)
+S3method(RunUMAP, Seurat_g)
 
 # methods for SCArrayAssay
 S3method(subset, SCArrayAssay)
@@ -41,9 +45,10 @@ importFrom(gdsfmt,
     add.gdsn, append.gdsn, closefn.gds, createfn.gds, openfn.gds, index.gdsn)
 importFrom(utils,
     capture.output, packageVersion, txtProgressBar, setTxtProgressBar)
+importFrom(Matrix, sparseMatrix)
 importFrom(stats, loess, quantile, as.formula, glm, lm, residuals, p.adjust)
 importFrom(BiocGenerics, counts, path)
-importFrom(BiocParallel, SerialParam, bplapply)
+importFrom(BiocParallel, SerialParam, bplapply, bpnworkers)
 importFrom(BiocSingular, runExactSVD, runIrlbaSVD)
 importFrom(SummarizedExperiment, assays, colData, rowData)
 
@@ -57,7 +62,7 @@ importFrom(SeuratObject,
     RenameCells)
 importFrom(Seurat,
     NormalizeData, ScaleData, FindVariableFeatures, FindMarkers, FoldChange,
-    RunPCA, RunICA, RunSPCA, RunLDA, RunSLSI)
+    RunPCA, RunICA, RunSPCA, RunLDA, RunSLSI, RunUMAP)
 
 # Import the classes and methods in DelayedArray & SCArray
 importClassesFrom(DelayedArray, DelayedArray, DelayedMatrix)

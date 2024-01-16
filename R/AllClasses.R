@@ -21,7 +21,7 @@ setClassUnion(name="UnionMatrix",
 setClassUnion(name="UnionMatrix2",
     members=c("NULL", "matrix", "SC_GDSMatrix"))
 
-# Extend Seurat Assay class, inherited from Seurat::Assay
+# Extend Seurat Assay class, inherit from Seurat::Assay
 setClass("SCArrayAssay", contains="Assay",
     slots = c(
         counts2 = "UnionMatrix",
@@ -29,3 +29,7 @@ setClass("SCArrayAssay", contains="Assay",
         scale.data2 = "UnionMatrix2"
     )
 )
+
+# Extend Seurat class
+setClass("Seurat_g", contains="Seurat")
+

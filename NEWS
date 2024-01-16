@@ -9,6 +9,8 @@ CHANGES IN VERSION 1.0.3
       `RunLDA.SCArrayAssay()`, `RenameCells.SCArrayAssay()`,
       `merge.SCArrayAssay()`
 
+    o new class 'Seurat_g', `merge.Seurat_g()`, `RunUMAP.Seurat_g()`
+
 
 CHANGES IN VERSION 1.0.0
 -------------------------

@@ -2,6 +2,7 @@
 \alias{scMemory}
 \alias{scMemory,SCArrayAssay-method}
 \alias{scMemory,Seurat-method}
+\alias{scMemory,Seurat_g-method}
 
 \title{Load Data to Memory}
 \description{
