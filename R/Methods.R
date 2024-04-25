@@ -5,7 +5,7 @@
 # Description:
 #     Large-scale single-cell RNA-seq data analysis using GDS files and Seurat
 #
-# Copyright (C) 2022-2023    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
+# Copyright (C) 2022-2024    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
 # License: GPL-3
 #
 
@@ -181,9 +181,9 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
 
 # S3 method for CreateSeuratObject()
 # Create a Seurat Object from a DelayedMatrix
-CreateSeuratObject.DelayedMatrix <- function(counts, project='SeuratProject',
-    assay='rna_', names.field=1, names.delim='_', meta.data=NULL, min.cells=0,
-    min.features=0, row.names=NULL, ...)
+CreateSeuratObject.DelayedMatrix <- function(counts, assay='rna_',
+    names.field=1, names.delim='_', meta.data=NULL, project='SeuratProject',
+    min.cells=0, min.features=0, row.names=NULL, ...)
 {
     # check
     x_check(counts, "Calling CreateSeuratObject.DelayedMatrix() with %s ...")

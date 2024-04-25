@@ -5,7 +5,7 @@
 # Description:
 #     Large-scale single-cell RNA-seq data analysis using GDS files and Seurat
 #
-# Copyright (C) 2022-2023    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
+# Copyright (C) 2022-2024    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
 # License: GPL-3
 #
 
@@ -98,8 +98,8 @@ GetAssayData.SCArrayAssay <- function(object,
 
 
 # Set data matrix in a SCArrayAssay object
-SetAssayData.SCArrayAssay <- function(object,
-    slot=c('data', 'scale.data', 'counts'), new.data, ...)
+SetAssayData.SCArrayAssay <- function(object, layer, new.data,
+    slot=c('data', 'scale.data', 'counts'), ...)
 {
     # check
     CheckDots(...)

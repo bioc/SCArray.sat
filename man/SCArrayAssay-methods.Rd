@@ -14,15 +14,16 @@
 \usage{
 \method{GetAssayData}{SCArrayAssay}(object,
     slot=c("data", "scale.data", "counts"), ...)
-\method{SetAssayData}{SCArrayAssay}(object,
-    slot=c('data', 'scale.data', 'counts'), new.data, ...)
+\method{SetAssayData}{SCArrayAssay}(object, layer, new.data,
+    slot=c('data', 'scale.data', 'counts'), ...)
 
 \method{subset}{SCArrayAssay}(x, cells=NULL, features=NULL, ...)
 }
 \arguments{
     \item{object, x}{a SCArrayAssay object (inherited from SeuratObject::Assay)}
-    \item{slot}{data matrix in the Assay object, "data" is used by default}
+    \item{layer}{layer}
     \item{new.data}{a new data matrix (dgCMatrix or SC_GDSMatrix)}
+    \item{slot}{data matrix in the Assay object, "data" is used by default}
     \item{cells}{names or indices for selected cells}
     \item{features}{names or indices for selected features}
     \item{...}{further arguments to be passed to or from other methods}
