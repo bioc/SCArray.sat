@@ -83,7 +83,7 @@ function(object, slot = "data", cells.1 = NULL, cells.2 = NULL,
     gd <- scRowAutoGrid(data.use)
     rv <- blockApply(data.use, function(bk, pm)
     {
-        if (is(bk, "SparseArraySeed")) bk <- as(bk, "sparseMatrix")
+        if (is(bk, "COO_SparseArray")) bk <- as(bk, "SVT_SparseArray")
         pm$object <- bk
         pm$fc.results <- pm$fc.results[
             match(rownames(bk), rownames(pm$fc.results)), ]

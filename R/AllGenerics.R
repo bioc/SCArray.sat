@@ -340,7 +340,7 @@ CheckMatrix.SC_GDSMatrix <- function(object, checks=NULL, ...)
     # block read
     flag <- blockReduce(function(bk, v)
     {
-        if (is(bk, "SparseArraySeed")) bk <- as(bk, "sparseMatrix")
+        if (is(bk, "COO_SparseArray")) bk <- as(bk, "SVT_SparseArray")
         v || anyNA(bk) || any(is.infinite(bk))
     }, object, FALSE, grid=gd, as.sparse=NA, verbose=FALSE, BREAKIF=identity)
     if (flag)

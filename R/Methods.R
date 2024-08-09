@@ -334,7 +334,7 @@ NormalizeData.SC_GDSMatrix <- function(object,
     # block processing
     blockReduce(function(bk, v, pb)
     {
-        if (is(bk, "SparseArraySeed"))
+        if (is(bk, "COO_SparseArray"))
             bk <- as(bk, "sparseMatrix")
         if (model.use == "linear")
         {
@@ -701,9 +701,9 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
     v <- SCArray:::.parallel_col_reduce(x, getAutoBPPARAM(),
         Fun = function(bk, v, mu, mu2, inv, vmax)
         {
-            if (is(bk, "SparseArraySeed"))
+            if (is(bk, "COO_SparseArray"))
             {
-                i <- bk@nzindex[, 1L]  # row index
+                i <- bk@nzcoo[, 1L]  # row index
                 bk@nzdata <-
                     base::pmin((bk@nzdata - mu[i])*inv[i], vmax)^2L - mu2[i]
                 b <- as(bk, "sparseMatrix")
