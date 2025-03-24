@@ -14,7 +14,7 @@ The package extends the [Seurat](https://cran.r-project.org/web/packages/Seurat/
 
 ## Bioconductor
 
-v0.99.0
+v1.8.0
 
 Package News: [NEWS](./NEWS)
 

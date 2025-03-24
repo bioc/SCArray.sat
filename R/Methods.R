@@ -709,6 +709,8 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
                 b <- as(bk, "sparseMatrix")
                 v + mu2*ncol(b) + rowSums(b)
             } else {
+                if (is(bk, "SVT_SparseArray"))
+                    bk <- as(bk, "sparseMatrix")
                 b <- base::pmin((bk - mu)*inv, vmax)^2L
                 v + rowSums(b)
             }
