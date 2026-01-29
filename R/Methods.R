@@ -79,8 +79,9 @@
 # Create an SCArrayAssay object from counts or data
 # similar to Seurat::CreateAssayObject, but allows DelayedMatrix
 CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
-    key=NULL, check.matrix=FALSE, ...)
+    key=NULL, check.matrix=FALSE, version=c("v5", "v3"), ...)
 {
+    version <- match.arg(version)
     if (missing(counts) && missing(data))
     {
         stop("Must provide either 'counts' or 'data'.")
@@ -161,17 +162,32 @@ CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
     # key & others
     k <- Key(object = key)[1L]
     if (is.null(k)) k <- ''
+    # fake sparse matrix
     m <- Matrix::sparseMatrix(i=c(), j=c(), x=double(),
         dims = c(NROW(data), NCOL(data)),
         dimnames = list(rownames(data), colnames(data)))
 
     # output
-    new(Class = "SCArrayAssay",
-        key = k,
-        counts = m, data = m,
-        counts2 = counts, data2 = data, scale.data2 = NULL,
-        meta.features = data.frame(row.names = rownames(data)),
-        misc = list())
+    if (version == "v3")
+    {
+        new(Class = "SCArrayAssay",
+            key = k,
+            counts = m, data = m,
+            counts2 = counts, data2 = data, scale.data2 = NULL,
+            meta.features = data.frame(row.names = rownames(data)),
+            misc = list())
+    } else if (version == "v5")
+    {
+        CreateAssay5Object(counts = counts, data = data)
+
+        # new(Class = "SCArrayAssay5",
+        #     key = k,
+        #     counts = m, data = m,
+        #     counts2 = counts, data2 = data, scale.data2 = NULL,
+        #     meta.features = data.frame(row.names = rownames(data)),
+        #     misc = list())
+    } else
+        stop("Invalid 'version'.")
 }
 
 

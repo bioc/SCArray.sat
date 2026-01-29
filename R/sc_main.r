@@ -5,7 +5,7 @@
 # Description:
 #     Large-scale single-cell RNA-seq data analysis using GDS files and Seurat
 #
-# Copyright (C) 2022-2023    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
+# Copyright (C) 2022-2026    Xiuwen Zheng (@AbbVie-ComputationalGenomics)
 # License: GPL-3
 #
 
@@ -197,6 +197,7 @@ scNewSeuratGDS <- function(gdsfile, assay.name=NULL, key=c(counts="rna_"),
         a <- CreateAssayObject2(counts(sce))
     }
     Key(a) <- unname(Seurat:::UpdateKey(tolower(key["counts"])))
+
     # meta information for features
     if (NCOL(rowData(sce)))
         a <- AddMetaData(a, as.data.frame(rowData(sce)))
