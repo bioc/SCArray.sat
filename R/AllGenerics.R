@@ -249,6 +249,18 @@ merge.Seurat_g <- function(...)
     unique(s)
 }
 
+.scget_sc_assay5 <- function(object, ...)
+{
+    s <- character()
+    if (is(object@layers$counts, "SC_GDSMatrix"))
+        s <- scGetFiles(object@layers$counts)
+    if (is(object@layers$data, "SC_GDSMatrix"))
+        s <- c(s, scGetFiles(object@layers$data))
+    if (is(object@layers$scale.data, "SC_GDSMatrix"))
+        s <- c(s, scGetFiles(object@layers$scale.data))
+    unique(s)
+}
+
 .scget_seurat <- function(object, ...)
 {
     s <- lapply(Assays(object), function(nm) scGetFiles(object[[nm]]))
@@ -258,6 +270,7 @@ merge.Seurat_g <- function(...)
 # Get file names for on-disk backend
 setMethod("scGetFiles", "Assay", function(object, ...) NULL)
 setMethod("scGetFiles", "SCArrayAssay", .scget_sc_assay)
+setMethod("scGetFiles", "Assay5", .scget_sc_assay5)
 setMethod("scGetFiles", "Seurat", .scget_seurat)
 
 
