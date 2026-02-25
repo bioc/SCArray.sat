@@ -79,9 +79,10 @@
 # Create an SCArrayAssay object from counts or data
 # similar to Seurat::CreateAssayObject, but allows DelayedMatrix
 CreateAssayObject2 <- function(counts, data, min.cells=0, min.features=0,
-    key=NULL, check.matrix=FALSE, version=c("v5", "v3"), ...)
+    key=NULL, check.matrix=FALSE, ...)
 {
-    version <- match.arg(version)
+    # version <- match.arg(version)
+    version <- "v5"
     if (missing(counts) && missing(data))
     {
         stop("Must provide either 'counts' or 'data'.")
@@ -768,14 +769,14 @@ ScaleData.SC_GDSMatrix <- function(object, features=NULL, vars.to.regress=NULL,
 FindVariableFeatures.SC_GDSMatrix <- function(object,
     selection.method="vst", loess.span=0.3, clip.max="auto",
     mean.function=NULL, dispersion.function=NULL, num.bin=20,
-    binning.method="equal_width", verbose=TRUE, ...)
+    binning.method="equal_width", verbose=TRUE, nfeatures=2000, ...)
 {
     # check
     x_msg("Calling FindVariableFeatures.SC_GDSMatrix() ...")
     stopifnot(is.character(selection.method), length(selection.method)==1L)
     if (is.numeric(clip.max))
         stopifnot(length(clip.max)==1L, clip.max>0)
-    CheckDots(...)
+    # CheckDots(...)
 
     # check mean & dispersion functions
     if (!is.null(mean.function))
@@ -813,7 +814,7 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
             "Calculating feature variances of standardized and clipped values")
         }
         # get variance after feature standardization and being clipped to a max
-        hvf$variance.standardized <- .row_var_std(
+        vv <- hvf$variance.standardized <- .row_var_std(
             object, hvf$mean, sqrt(hvf$variance.expected),
             clip.max, verbose)
         colnames(hvf) <- paste0('vst.', colnames(hvf))
@@ -846,6 +847,13 @@ FindVariableFeatures.SC_GDSMatrix <- function(object,
         colnames(hvf) <- paste0('mvp.',
             c('mean', 'dispersion', 'dispersion.scaled'))
     }
+
+    # variable
+    hvf$variable <- FALSE
+    hvf$rank <- NA
+    i <- head(order(vv, decreasing=TRUE), nfeatures)
+    hvf$variable[i] <- TRUE
+    hvf$rank[i] <- seq_along(i)
 
     # output
     rownames(hvf) <- rownames(object)

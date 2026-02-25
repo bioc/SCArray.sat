@@ -1,6 +1,7 @@
 \name{scGetFiles}
 \alias{scGetFiles}
 \alias{scGetFiles,Assay-method}
+\alias{scGetFiles,Assay5-method}
 \alias{scGetFiles,SCArrayAssay-method}
 \alias{scGetFiles,Seurat-method}
 
@@ -12,6 +13,7 @@
 \usage{
 scGetFiles(object, ...)
 \S4method{scGetFiles}{Assay}(object, ...)
+\S4method{scGetFiles}{Assay5}(object, ...)
 \S4method{scGetFiles}{SCArrayAssay}(object, ...)
 \S4method{scGetFiles}{Seurat}(object, ...)
 }

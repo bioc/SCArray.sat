@@ -271,7 +271,6 @@ merge.Seurat_g <- function(...)
 setMethod("scGetFiles", "Assay", function(object, ...) NULL)
 setMethod("scGetFiles", "SCArrayAssay", .scget_sc_assay)
 setMethod("scGetFiles", "Assay5", .scget_sc_assay5)
-setMethod("scGetFiles", "SCArrayAssay5", .scget_sc_assay5)
 setMethod("scGetFiles", "Seurat", .scget_seurat)
 
 

@@ -30,9 +30,6 @@ setClass("SCArrayAssay", contains="Assay",
     )
 )
 
-# Extend Seurat Assay5 class, inherit from Seurat::Assay5
-setClass("SCArrayAssay5", contains="Assay5")
-
 # Extend Seurat class
 setClass("Seurat_g", contains="Seurat")
 

@@ -293,9 +293,9 @@ If users only want to 'downgrade' the scaled data matrix, then
 ```{r}
 is(GetAssayData(d, layer="scale.data"))  # it is a DelayedMatrix
 
-new_d <- scMemory(d, slot="scale.data")  # downgrade "scale.data" in the active assay
+# new_d <- scMemory(d, "scale.data")  # downgrade "scale.data" in the active assay
 is(GetAssay(new_d))  # it is still SCArrayAssay
-is(GetAssayData(new_d, layer="scale.data"))  # in-memory matrix
+# is(GetAssayData(new_d, layer="scale.data"))  # in-memory matrix
 ```
 
 ~

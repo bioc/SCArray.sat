@@ -20,7 +20,7 @@ xPrepDR <- function(object, features=NULL, slot="scale.data", verbose=TRUE)
         stop("Variable features haven't been set. ",
             "Run FindVariableFeatures() or provide a vector of feature names.")
     }
-    data.use <- GetAssayData(object, slot=slot)
+    data.use <- GetAssayData(object, slot)
     if (nrow(data.use)==0L && slot=="scale.data")
         stop("Data has not been scaled. Please run ScaleData and retry")
     if (is.null(features))
