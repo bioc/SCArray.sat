@@ -25,8 +25,8 @@ scNewAssayGDS(gdsfile, name="counts", key="rna_", row_data=TRUE, check=TRUE,
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{SCArrayAssay}}, \code{\link{SCArrayFileClass}},
-    \code{\link{scExperiment}}, \code{\link{scNewSeuratGDS}}
+    \code{\link{SCArrayAssay}}, \code{\link[SCArray]{SCArrayFileClass}},
+    \code{\link[SCArray]{scExperiment}}, \code{\link{scNewSeuratGDS}}
 }
 
 \examples{

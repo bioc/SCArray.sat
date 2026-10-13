@@ -1,11 +1,13 @@
 \name{RunPCA}
 \alias{RunPCA}
 \alias{RunPCA.SCArrayAssay}
+\alias{RunPCA.Assay5}
 \alias{RunPCA.SC_GDSMatrix}
 
 \title{Run PCA}
 \description{
-    Performs PCA on a Seurat SCArrayAssay or a DelayedMatrix object.
+    Performs PCA on a Seurat SCArrayAssay, Assay5 (with DelayedMatrix layers)
+or a DelayedMatrix object.
 }
 
 \usage{
@@ -13,6 +15,10 @@
 \method{RunPCA}{SCArrayAssay}(object, assay=NULL, features=NULL, npcs=50,
     rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, ...)
+\method{RunPCA}{Assay5}(object, assay=NULL, features=NULL,
+    layer="scale.data", npcs=50, rev.pca=FALSE, weight.by.var=TRUE,
+    verbose=TRUE, ndims.print=1:5, nfeatures.print=30, reduction.key="PC_",
+    seed.use=42, ...)
 \method{RunPCA}{SC_GDSMatrix}(object, assay=NULL, npcs=50, rev.pca=FALSE,
     weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
     nfeatures.print=30, reduction.key="PC_", seed.use=42, approx=TRUE,
@@ -20,10 +26,11 @@
 }
 
 \arguments{
-    \item{object}{input R object (e.g., a SCArrayAssay object)}
+    \item{object}{input R object (e.g., a SCArrayAssay or Assay5 object)}
     \item{assay}{NULL for using the active assay, or an assay name}
     \item{features}{if \code{NULL}, PCA will be run on the scaled data;
         otherwise, features to compute PCA on}
+    \item{layer}{the layer in the Assay5 object used for PCA}
     \item{npcs}{# of top PCs to be calculated}
     \item{rev.pca}{By default (\code{FALSE}), perform PCA on the cell x gene
         matrix; otherwise, compute it on gene x cell matrix}
@@ -45,6 +52,10 @@
     \code{RunPCA()} computes the covariance matrix of genes (if # of genes <=
 # of cells) or the cell covariance matrix for the PCA calculation, which can
 reduce the times of accessing on-disk data.
+
+    \code{RunPCA.Assay5()} is used when the layer is a DelayedMatrix (e.g.,
+SC_GDSMatrix); otherwise, it calls the method for \code{StdAssay} in the
+Seurat package.
 }
 \value{
     Return a data frame for reduction data (via \code{CreateDimReducObject}).
@@ -52,8 +63,9 @@ reduce the times of accessing on-disk data.
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link[Seurat]{RunPCA}}, \code{\link{CreateDimReducObject}},
-    \code{\link{BiocParallelParam}}, \code{\link{getAutoBPPARAM}}
+    \code{\link[Seurat]{RunPCA}}, \code{\link[SeuratObject]{CreateDimReducObject}},
+    \code{\link[BiocParallel]{BiocParallelParam}},
+    \code{\link[DelayedArray]{getAutoBPPARAM}}
 }
 
 \examples{
@@ -68,7 +80,7 @@ d <- ScaleData(d)
 d <- RunPCA(d, ndims.print=1:2)
 DimPlot(d, reduction="pca")
 
-remove(a, d)
+remove(d)
 }
 
 \keyword{methods}

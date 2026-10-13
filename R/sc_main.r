@@ -216,7 +216,7 @@ scNewSeuratGDS <- function(gdsfile, assay.name=NULL, key=c(counts="rna_"),
         if (is.na(k)) k <- paste0("rna_", nm)
         if (!grepl("_$", k)) k <- paste0(k, "_")
         Key(a) <- unname(Seurat:::UpdateKey(tolower(k)))
-        object[[paste0("RNA_", nm)]] <- assay_lst[[nm]]
+        object[[paste0("RNA_", nm)]] <- a
     }
 
     # output

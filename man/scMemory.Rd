@@ -46,7 +46,7 @@ is(GetAssay(d1))
 d2 <- scMemory(d1)
 is(GetAssay(d2))
 
-remove(a, d1, d2)
+remove(d1, d2)
 }
 
 \keyword{methods}

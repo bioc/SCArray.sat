@@ -29,13 +29,13 @@ used as normalized data associated with \code{"counts"}. If there are other
 data matrices in the GDS file, they will be added to the assay list.
 }
 \value{
-    Return an instance of \code{\link{Seurat}}.
+    Return an instance of \code{\link[SeuratObject:Seurat-class]{Seurat}}.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{SCArrayAssay}}, \code{\link{SCArrayFileClass}},
-    \code{\link{scExperiment}}, \code{\link{scNewAssayGDS}}
+    \code{\link{SCArrayAssay}}, \code{\link[SCArray]{SCArrayFileClass}},
+    \code{\link[SCArray]{scExperiment}}, \code{\link{scNewAssayGDS}}
 }
 
 \examples{

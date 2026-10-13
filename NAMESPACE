@@ -24,6 +24,11 @@ S3method(RunSPCA, SCArrayAssay)
 S3method(RunLDA, SCArrayAssay)
 S3method(RunSLSI, SCArrayAssay)
 
+# methods for Assay5 with DelayedMatrix layers
+S3method(RunPCA, Assay5)
+S3method(RunICA, Assay5)
+S3method(RunSLSI, Assay5)
+
 # methods for DelayedMatrix
 S3method(as.sparse, DelayedMatrix)
 S3method(CreateSeuratObject, DelayedMatrix)
@@ -58,8 +63,8 @@ importFrom(SeuratObject,
     GetAssayData, SetAssayData, CreateSeuratObject,
     Assays, AddMetaData, IsMatrixEmpty, Key, 'Key<-', as.sparse,
     VariableFeatures, 'VariableFeatures<-',
-    CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateDimReducObject,
-    RenameCells)
+    CheckDots, CheckGC, CheckMatrix, CreateAssayObject, CreateAssay5Object,
+    CreateDimReducObject, RenameCells, Layers, LayerData)
 importFrom(Seurat,
     NormalizeData, ScaleData, FindVariableFeatures, FindMarkers, FoldChange,
     RunPCA, RunICA, RunSPCA, RunLDA, RunSLSI, RunUMAP)
