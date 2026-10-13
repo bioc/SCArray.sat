@@ -2,7 +2,7 @@
 \alias{CreateAssayObject2}
 \title{Create an Assay object}
 \description{
-    Create an SCArrayAssay (inherited from Assay) object from counts or
+    Create an Assay5 object with DelayedMatrix layers from counts or
 prenormalized data.
 }
 \usage{
@@ -17,21 +17,21 @@ CreateAssayObject2(counts, data, min.cells=0, min.features=0,
     \item{check.matrix}{Check counts matrix for NA, NaN, Inf, and non-integer
         values}
     \item{key}{Key name for the assay}
-    \item{...}{Arguments passed to \code{\link{as.sparse}} when \code{counts}
+    \item{...}{Arguments passed to \code{\link[SeuratObject]{as.sparse}} when \code{counts}
         or \code{data} is matrix or dgCMatrix}
 }
 \details{
     Similar to \code{SeuratObject::CreateAssayObject()}, except allowing
-DelayedMatrix \code{counts} or \code{data}, and returning a \code{SCArrayAssay}
+DelayedMatrix \code{counts} or \code{data}, and returning an \code{Assay5}
 object. \code{counts} and \code{data} should not be provided at the same time.
 }
 \value{
-    Return an instance of \code{\link{SCArrayAssay}}.
+    Return an instance of \code{\link[SeuratObject:Assay5-class]{Assay5}}.
 }
 
 \author{Xiuwen Zheng}
 \seealso{
-    \code{\link{CreateAssayObject}}, \code{\link{scGetFiles}}
+    \code{\link[SeuratObject]{CreateAssayObject}}, \code{\link{scGetFiles}}
 }
 
 \examples{

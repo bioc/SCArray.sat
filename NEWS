@@ -1,3 +1,14 @@
+CHANGES IN VERSION 1.14.0
+-------------------------
+
+    o fix `RunPCA()` on Seurat Assay5 objects with DelayedMatrix layers,
+      which failed with Seurat (>= 5.6.0); new `RunPCA.Assay5()`,
+      `RunICA.Assay5()` and `RunSLSI.Assay5()`
+
+    o fix `scNewSeuratGDS()` when the GDS file has assays other than
+      "counts" and "logcounts"
+
+
 CHANGES IN VERSION 1.12.0
 -------------------------
 

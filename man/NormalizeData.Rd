@@ -44,7 +44,7 @@ d <- scNewSeuratGDS(fn)
 d
 d <- NormalizeData(d)
 
-remove(a, d)
+remove(d)
 }
 
 \keyword{methods}

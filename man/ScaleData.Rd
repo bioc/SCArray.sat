@@ -87,7 +87,7 @@ d <- ScaleData(d, split.by=ss)
 fn <- scGetFiles(d)
 fn[2L]    # the file name storing scaled data
 
-remove(a, d)
+remove(d)
 unlink(fn[grepl("^_scale", fn)], force=TRUE)
 }
 

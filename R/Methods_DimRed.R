@@ -55,8 +55,86 @@ xPrepDR <- function(object, features=NULL, slot="scale.data", verbose=TRUE)
 }
 
 
+# Return the layer name if the layer in an Assay5 object is a DelayedArray,
+#   otherwise NULL
+xDelayedLayer <- function(object, layer)
+{
+    ly <- Layers(object, search=layer[1L])
+    if (length(ly) && is(LayerData(object, layer=ly[1L]), "DelayedArray"))
+        ly[1L]
+    else
+        NULL
+}
+
+# Prepare data matrix for dimensionality reduction on an Assay5 object
+# Seurat (>= 5.6.0): PrepDR5() calls the C++ function RowVar() which does not
+#   support DelayedMatrix
+xPrepDR5 <- function(object, layer, features=NULL, verbose=TRUE)
+{
+    if (is.null(features)) features <- VariableFeatures(object)
+    if (length(features) == 0L)
+    {
+        stop("Variable features haven't been set. ",
+            "Run FindVariableFeatures() or provide a vector of feature names.")
+    }
+    data.use <- LayerData(object, layer=layer)
+    f_keep <- unique(features[features %in% rownames(data.use)])
+    if (length(f_keep) < length(features))
+    {
+        f_exclude <- setdiff(features, f_keep)
+        if (verbose)
+        {
+            warning("The following ", length(f_exclude),
+                " features requested are not available: ",
+                paste0(f_exclude, collapse=", "), immediate.=TRUE)
+        }
+    }
+    data.use <- data.use[f_keep, , drop=FALSE]
+    i <- which(rowVars(data.use) > 0)  # block-wise row variances
+    if (length(i) == 0L)
+        stop("None of the requested features have any variance.")
+    if (length(i) < length(f_keep))
+    {
+        if (verbose)
+        {
+            warning("The following ", length(f_keep) - length(i),
+                " features requested have zero variance ",
+                "(running reduction without them): ",
+                paste0(f_keep[-i], collapse=", "), immediate.=TRUE)
+        }
+        data.use <- data.use[i, , drop=FALSE]
+    }
+    data.use
+}
+
+
 
 ####  Methods -- RunPCA()  ####
+
+RunPCA.Assay5 <- function(object, assay=NULL, features=NULL,
+    layer="scale.data", npcs=50, rev.pca=FALSE, weight.by.var=TRUE,
+    verbose=TRUE, ndims.print=1:5, nfeatures.print=30, reduction.key="PC_",
+    seed.use=42, ...)
+{
+    # use Seurat::RunPCA.StdAssay() if the layer is not a DelayedArray
+    ly <- xDelayedLayer(object, layer)
+    if (is.null(ly)) return(NextMethod())
+    # run
+    x_msg("Calling RunPCA.Assay5() ...")
+    data.use <- xPrepDR5(object, ly, features, verbose)
+    RunPCA(object = data.use,
+        assay = assay,
+        npcs = npcs,
+        rev.pca = rev.pca,
+        weight.by.var = weight.by.var,
+        verbose = verbose,
+        ndims.print = ndims.print,
+        nfeatures.print = nfeatures.print,
+        reduction.key = reduction.key,
+        seed.use = seed.use,
+        ...
+    )
+}
 
 RunPCA.SCArrayAssay <- function(object, assay=NULL, features=NULL, npcs=50,
     rev.pca=FALSE, weight.by.var=TRUE, verbose=TRUE, ndims.print=1:5,
@@ -233,6 +311,25 @@ RunICA.SCArrayAssay <- function(object, assay=NULL, features=NULL, nics=50,
         seed.use=seed.use, ...)
 }
 
+RunICA.Assay5 <- function(object, assay=NULL, features=NULL,
+    layer="scale.data", nics=50, rev.ica=FALSE, ica.function="icafast",
+    verbose=TRUE, ndims.print=1:5, nfeatures.print=30, reduction.name="ica",
+    reduction.key="ica_", seed.use=42, ...)
+{
+    # use Seurat::RunICA.StdAssay() if the layer is not a DelayedArray
+    ly <- xDelayedLayer(object, layer)
+    if (is.null(ly)) return(NextMethod())
+    # run
+    x_msg("Calling RunICA.Assay5() ...")
+    data.use <- xPrepDR5(object, ly, features, verbose)
+    x_msg("  \\= Running ICA dimensionality reduction ...")
+    RunICA(object=data.use, assay=assay,
+        nics=nics, rev.ica=rev.ica, ica.function=ica.function,
+        verbose=verbose, ndims.print=ndims.print,
+        nfeatures.print=nfeatures.print, reduction.key=reduction.key,
+        seed.use=seed.use, ...)
+}
+
 
 ####  Methods -- RunSPCA()  ####
 
@@ -273,6 +370,22 @@ RunSLSI.SCArrayAssay <- function(object, assay=NULL, features=NULL, n=50,
 {
     x_msg("Calling RunSPCA.SCArrayAssay() ...")
     data.use <- xPrepDR(object, features=features, slot="data", verbose=verbose)
+    x_msg("  \\= Running supervised LSI dimensionality reduction ...")
+    RunSLSI(object=data.use, assay=assay,
+        n=n, reduction.key=reduction.key, graph=graph,
+        verbose=verbose, seed.use=seed.use, ...)
+}
+
+RunSLSI.Assay5 <- function(object, assay=NULL, features=NULL, n=50,
+    reduction.key="SLSI_", graph=NULL, layer="data", verbose=TRUE,
+    seed.use=42, ...)
+{
+    # use Seurat::RunSLSI.StdAssay() if the layer is not a DelayedArray
+    ly <- xDelayedLayer(object, layer)
+    if (is.null(ly)) return(NextMethod())
+    # run
+    x_msg("Calling RunSLSI.Assay5() ...")
+    data.use <- xPrepDR5(object, ly, features, verbose)
     x_msg("  \\= Running supervised LSI dimensionality reduction ...")
     RunSLSI(object=data.use, assay=assay,
         n=n, reduction.key=reduction.key, graph=graph,
